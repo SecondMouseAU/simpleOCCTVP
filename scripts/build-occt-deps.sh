@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Build OpenCASCADE 8.0.0 as static libraries for occtTemplot
+# Build OpenCASCADE 8.0.0 as static libraries for simpleOCCTVP
 #
 # Usage: ./build-occt-deps.sh [--platform macos|windows|linux]
 #
@@ -153,6 +153,7 @@ case "$PLATFORM" in
         cmake ../occt-src \
             -G "Unix Makefiles" \
             "${CMAKE_COMMON_OPTS[@]}" \
+            -DUSE_XLIB=ON \
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         ;;
 

@@ -37,10 +37,10 @@ jobs:
       - name: Build library
         run: cmake --build build --config Release
 
-      - name: Run tests
+      - name: Run tests (excluding viewer — no GPU on CI)
         run: |
           cd build
-          ctest --output-on-failure -C Release
+          ctest --output-on-failure -C Release --exclude-regex viewer
 
       - name: Upload DLL
         uses: actions/upload-artifact@v4
@@ -70,8 +70,8 @@ jobs:
       - name: Build library
         run: cmake --build build
 
-      - name: Run tests
-        run: cd build && ctest --output-on-failure
+      - name: Run tests (excluding viewer — no GPU on CI)
+        run: cd build && ctest --output-on-failure --exclude-regex viewer
 
       - name: Upload dylib
         uses: actions/upload-artifact@v4
@@ -89,7 +89,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake g++ \
-            libgl-dev libglu1-mesa-dev \
+            libgl-dev libglu1-mesa-dev libegl-dev \
             libx11-dev libxi-dev libxmu-dev \
             xvfb
 
@@ -114,8 +114,8 @@ jobs:
       - name: Build library
         run: cmake --build build --parallel $(nproc)
 
-      - name: Run tests
-        run: cd build && xvfb-run ctest --output-on-failure
+      - name: Run tests (excluding viewer — no GPU on CI)
+        run: cd build && xvfb-run ctest --output-on-failure --exclude-regex viewer
 
       - name: Upload .so
         uses: actions/upload-artifact@v4
