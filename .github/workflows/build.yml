@@ -1,0 +1,124 @@
+name: Build simpleOCCTVP
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache OCCT dependencies
+        id: cache-occt
+        uses: actions/cache@v4
+        with:
+          path: deps/occt-install
+          key: occt-8.0.0-rc3-windows-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+
+      - name: Build OCCT dependencies
+        if: steps.cache-occt.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          scripts/build-occt-deps.sh
+
+      - name: Configure CMake
+        run: >
+          cmake -B build -S .
+          -G "Visual Studio 17 2022" -A x64
+          -DCMAKE_BUILD_TYPE=Release
+          -DOCCT_INSTALL_DIR=deps/occt-install
+          -DBUILD_TESTS=ON
+
+      - name: Build library
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure -C Release
+
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: simpleOCCTVP-windows-x64
+          path: build/Release/simpleOCCTVP.dll
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache OCCT dependencies
+        id: cache-occt
+        uses: actions/cache@v4
+        with:
+          path: deps/occt-install
+          key: occt-8.0.0-rc3-macos-arm64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+
+      - name: Build OCCT dependencies
+        if: steps.cache-occt.outputs.cache-hit != 'true'
+        run: scripts/build-occt-deps.sh
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DOCCT_INSTALL_DIR=deps/occt-install -DBUILD_TESTS=ON
+
+      - name: Build library
+        run: cmake --build build
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: simpleOCCTVP-macos-arm64
+          path: build/libsimpleOCCTVP.dylib
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake g++ \
+            libgl-dev libglu1-mesa-dev \
+            libx11-dev libxi-dev libxmu-dev \
+            xvfb
+
+      - name: Cache OCCT dependencies
+        id: cache-occt
+        uses: actions/cache@v4
+        with:
+          path: deps/occt-install
+          key: occt-8.0.0-rc3-linux-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+
+      - name: Build OCCT dependencies
+        if: steps.cache-occt.outputs.cache-hit != 'true'
+        run: scripts/build-occt-deps.sh
+
+      - name: Configure CMake
+        run: >
+          cmake -B build -S .
+          -DCMAKE_BUILD_TYPE=Release
+          -DOCCT_INSTALL_DIR=deps/occt-install
+          -DBUILD_TESTS=ON
+
+      - name: Build library
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Run tests
+        run: cd build && xvfb-run ctest --output-on-failure
+
+      - name: Upload .so
+        uses: actions/upload-artifact@v4
+        with:
+          name: simpleOCCTVP-linux-x64
+          path: build/libsimpleOCCTVP.so*
