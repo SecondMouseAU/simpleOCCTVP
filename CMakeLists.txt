@@ -111,15 +111,25 @@ set(OCCT_LIBS
     TKernel
 )
 
+set(OCCT_FOUND_LIBS "")
 foreach(LIB ${OCCT_LIBS})
     find_library(OCCT_${LIB} ${LIB} PATHS ${OCCT_LIB_DIR} NO_DEFAULT_PATH)
     if(OCCT_${LIB})
-        target_link_libraries(simpleOCCTVP PRIVATE ${OCCT_${LIB}})
+        list(APPEND OCCT_FOUND_LIBS ${OCCT_${LIB}})
         message(STATUS "  Found: ${LIB}")
     else()
         message(WARNING "  OCCT library not found: ${LIB}")
     endif()
 endforeach()
+
+# On Linux, OCCT static archives have circular dependencies.
+# Wrap them in --start-group/--end-group so the linker resolves all symbols.
+if(UNIX AND NOT APPLE)
+    target_link_libraries(simpleOCCTVP PRIVATE
+        -Wl,--start-group ${OCCT_FOUND_LIBS} -Wl,--end-group)
+else()
+    target_link_libraries(simpleOCCTVP PRIVATE ${OCCT_FOUND_LIBS})
+endif()
 
 # --------------------
 # Platform-specific settings
