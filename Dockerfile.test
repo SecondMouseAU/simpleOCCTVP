@@ -1,0 +1,16 @@
+FROM ubuntu:24.04
+RUN apt-get update && apt-get install -y \
+    cmake g++ git \
+    libgl-dev libglu1-mesa-dev libegl-dev \
+    libx11-dev libxi-dev libxmu-dev \
+    xvfb && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+COPY scripts/build-occt-deps.sh scripts/
+COPY CMakeLists.txt .
+COPY src/ src/
+COPY tests/ tests/
+RUN scripts/build-occt-deps.sh
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DOCCT_INSTALL_DIR=deps/occt-install -DBUILD_TESTS=ON
+RUN cmake --build build --parallel $(nproc)
+RUN cd build && xvfb-run ctest --output-on-failure --exclude-regex viewer
