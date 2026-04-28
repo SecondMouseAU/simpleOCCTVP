@@ -33,6 +33,8 @@
 #include <gp_Trsf.hxx>
 #include <Bnd_Box.hxx>
 #include <BRepBndLib.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <TColgp_Array1OfPnt.hxx>
 
 #include <vector>
 #include <cstdlib>
@@ -72,7 +74,7 @@ OT_EXPORT OTCameraRef ot_camera_create(void) {
         g_last_error.clear();
         return static_cast<OTCameraRef>(c);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_camera_create: ") + e.GetMessageString();
+        g_last_error = std::string("ot_camera_create: ") + e.what();
         return nullptr;
     }
 }
@@ -431,7 +433,7 @@ OT_EXPORT OTEdgeMeshData ot_edge_mesh_shape(OTShapeRef shape, double deflection)
         free(result.vertices);
         free(result.segment_starts);
         result = {nullptr, 0, nullptr, 0};
-        g_last_error = std::string("ot_edge_mesh_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_edge_mesh_shape: ") + e.what();
         return result;
     } catch (...) {
         free(result.vertices);
@@ -462,7 +464,7 @@ OT_EXPORT OTDrawerRef ot_drawer_create(void) {
         g_last_error.clear();
         return static_cast<OTDrawerRef>(d);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_drawer_create: ") + e.GetMessageString();
+        g_last_error = std::string("ot_drawer_create: ") + e.what();
         return nullptr;
     }
 }

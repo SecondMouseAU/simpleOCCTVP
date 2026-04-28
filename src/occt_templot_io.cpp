@@ -173,7 +173,7 @@ OT_EXPORT OTShapeRef ot_import_stl(const char* path) {
         g_last_error.clear();
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_stl: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_stl: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_stl: unknown exception";
@@ -234,7 +234,7 @@ OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolera
         g_last_error.clear();
         return new OTShapeInternal(fixed.IsNull() ? resultShape : fixed);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_stl_robust: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_stl_robust: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_stl_robust: unknown exception";
@@ -266,7 +266,7 @@ OT_EXPORT OTShapeRef ot_import_step(const char* path) {
         g_last_error.clear();
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_step: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_step: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_step: unknown exception";
@@ -354,7 +354,7 @@ OT_EXPORT OTShapeRef ot_import_step_robust(const char* path) {
         return new OTShapeInternal(fixed.IsNull() ? shape : fixed);
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_step_robust: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_step_robust: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_step_robust: unknown exception";
@@ -435,7 +435,7 @@ OT_EXPORT OTImportResult ot_import_step_with_diagnostics(const char* path) {
         return result;
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_step_with_diagnostics: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_step_with_diagnostics: ") + e.what();
         return result;
     } catch (...) {
         g_last_error = "ot_import_step_with_diagnostics: unknown exception";
@@ -467,7 +467,7 @@ OT_EXPORT OTShapeRef ot_import_iges(const char* path) {
         g_last_error.clear();
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_iges: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_iges: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_iges: unknown exception";
@@ -511,7 +511,7 @@ OT_EXPORT OTShapeRef ot_import_iges_robust(const char* path) {
         g_last_error.clear();
         return new OTShapeInternal(fixed.IsNull() ? shape : fixed);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_iges_robust: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_iges_robust: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_iges_robust: unknown exception";
@@ -553,7 +553,7 @@ OT_EXPORT OTShapeRef ot_import_obj(const char* path) {
         g_last_error.clear();
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_import_obj: ") + e.GetMessageString();
+        g_last_error = std::string("ot_import_obj: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_obj: unknown exception";
@@ -589,7 +589,7 @@ OT_EXPORT bool ot_export_stl(OTShapeRef shape, const char* path, double deflecti
         }
         return result;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_export_stl: ") + e.GetMessageString();
+        g_last_error = std::string("ot_export_stl: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_export_stl: unknown exception";
@@ -627,7 +627,7 @@ OT_EXPORT bool ot_export_step(OTShapeRef shape, const char* path) {
         }
         return success;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_export_step: ") + e.GetMessageString();
+        g_last_error = std::string("ot_export_step: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_export_step: unknown exception";
@@ -663,7 +663,7 @@ OT_EXPORT bool ot_export_iges(OTShapeRef shape, const char* path) {
         }
         return success;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_export_iges: ") + e.GetMessageString();
+        g_last_error = std::string("ot_export_iges: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_export_iges: unknown exception";
@@ -705,7 +705,7 @@ OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflecti
         }
         return success;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_export_obj: ") + e.GetMessageString();
+        g_last_error = std::string("ot_export_obj: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_export_obj: unknown exception";
@@ -748,7 +748,7 @@ OT_EXPORT bool ot_export_ply(OTShapeRef shape, const char* path, double deflecti
         }
         return success;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_export_ply: ") + e.GetMessageString();
+        g_last_error = std::string("ot_export_ply: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_export_ply: unknown exception";

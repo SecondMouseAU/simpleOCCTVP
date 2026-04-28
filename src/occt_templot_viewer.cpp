@@ -34,6 +34,7 @@
 #include <Prs3d_LineAspect.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <NCollection_Vec2.hxx>
 
 #include <vector>
 #include <cstdlib>
@@ -124,7 +125,7 @@ OT_EXPORT OTViewerRef ot_viewer_create(int32_t width, int32_t height) {
         viewCube->SetBoxColor(Quantity_NOC_GRAY75);
         viewCube->SetTransformPersistence(
             new Graphic3d_TransformPers(Graphic3d_TMF_TriedronPers,
-                Aspect_TOTP_RIGHT_UPPER, Graphic3d_Vec2i(85, 85)));
+                Aspect_TOTP_RIGHT_UPPER, NCollection_Vec2<int>(85, 85)));
         v->context->Display(viewCube, false);
 
         // Create V3d_View
@@ -154,7 +155,7 @@ OT_EXPORT OTViewerRef ot_viewer_create(int32_t width, int32_t height) {
         return static_cast<OTViewerRef>(v);
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_create: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_create: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_viewer_create: unknown exception";
@@ -193,7 +194,7 @@ OT_EXPORT bool ot_viewer_resize(OTViewerRef viewer, int32_t width, int32_t heigh
         g_last_error.clear();
         return true;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_resize: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_resize: ") + e.what();
         return false;
     }
 }
@@ -252,7 +253,7 @@ OT_EXPORT int32_t ot_viewer_add_shape(OTViewerRef viewer, OTShapeRef shape, OTDi
         return displayId;
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_add_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_add_shape: ") + e.what();
         return -1;
     } catch (...) {
         g_last_error = "ot_viewer_add_shape: unknown exception";
@@ -276,7 +277,7 @@ OT_EXPORT bool ot_viewer_remove_shape(OTViewerRef viewer, int32_t display_id) {
         g_last_error.clear();
         return true;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_remove_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_remove_shape: ") + e.what();
         return false;
     }
 }
@@ -588,7 +589,7 @@ OT_EXPORT const uint8_t* ot_viewer_render(OTViewerRef viewer,
         return v->pixmap.Data();
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_render: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_render: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_viewer_render: unknown exception";
@@ -636,7 +637,7 @@ OT_EXPORT bool ot_viewer_render_to_buffer(OTViewerRef viewer,
         return true;
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_render_to_buffer: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_render_to_buffer: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_viewer_render_to_buffer: unknown exception";
@@ -682,7 +683,7 @@ OT_EXPORT bool ot_viewer_save_image(OTViewerRef viewer, const char* path) {
         return true;
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_viewer_save_image: ") + e.GetMessageString();
+        g_last_error = std::string("ot_viewer_save_image: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_viewer_save_image: unknown exception";

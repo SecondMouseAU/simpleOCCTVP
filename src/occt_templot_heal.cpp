@@ -132,7 +132,7 @@ OT_EXPORT OTShapeAnalysis ot_analyze_shape(OTShapeRef shape, double tolerance) {
         g_last_error.clear();
         return result;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_analyze_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_analyze_shape: ") + e.what();
         return result;
     } catch (...) {
         g_last_error = "ot_analyze_shape: unknown exception";
@@ -161,7 +161,7 @@ OT_EXPORT OTShapeRef ot_heal_shape(OTShapeRef shape) {
         g_last_error.clear();
         return new OTShapeInternal(fixed);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_heal_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_heal_shape: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_heal_shape: unknown exception";
@@ -198,7 +198,7 @@ OT_EXPORT OTShapeRef ot_heal_shape_detailed(OTShapeRef shape, double tolerance,
         g_last_error.clear();
         return new OTShapeInternal(fixedShape);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_heal_shape_detailed: ") + e.GetMessageString();
+        g_last_error = std::string("ot_heal_shape_detailed: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_heal_shape_detailed: unknown exception";
@@ -239,7 +239,7 @@ OT_EXPORT OTShapeRef ot_sew_shape(OTShapeRef shape, double tolerance) {
         g_last_error.clear();
         return new OTShapeInternal(sewn);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_sew_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_sew_shape: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_sew_shape: unknown exception";
@@ -283,7 +283,7 @@ OT_EXPORT OTShapeRef ot_upgrade_shape(OTShapeRef shape, double tolerance) {
         g_last_error.clear();
         return new OTShapeInternal(fixed.IsNull() ? resultShape : fixed);
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_upgrade_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_upgrade_shape: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_upgrade_shape: unknown exception";
@@ -319,7 +319,7 @@ OT_EXPORT OTShapeRef ot_make_solid(OTShapeRef shape) {
         g_last_error = "ot_make_solid: could not create solid from shape";
         return nullptr;
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_make_solid: ") + e.GetMessageString();
+        g_last_error = std::string("ot_make_solid: ") + e.what();
         return nullptr;
     } catch (...) {
         g_last_error = "ot_make_solid: unknown exception";

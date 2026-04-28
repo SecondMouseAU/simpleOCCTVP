@@ -181,7 +181,7 @@ OT_EXPORT OTMeshData ot_mesh_shape(OTShapeRef shape, double deflection) {
         free(result.vertices);
         free(result.indices);
         result = {nullptr, 0, nullptr, 0};
-        g_last_error = std::string("ot_mesh_shape: ") + e.GetMessageString();
+        g_last_error = std::string("ot_mesh_shape: ") + e.what();
         return result;
     } catch (...) {
         free(result.vertices);
@@ -239,7 +239,7 @@ OT_EXPORT bool ot_mesh_shape_separate(OTShapeRef shape, double deflection,
         return (totalVerts > 0 && totalTris > 0);
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_mesh_shape_separate: ") + e.GetMessageString();
+        g_last_error = std::string("ot_mesh_shape_separate: ") + e.what();
         *out_vertex_count = 0;
         *out_triangle_count = 0;
         return false;
@@ -365,7 +365,7 @@ OT_EXPORT bool ot_mesh_shape_fill(OTShapeRef shape,
         return true;
 
     } catch (const Standard_Failure& e) {
-        g_last_error = std::string("ot_mesh_shape_fill: ") + e.GetMessageString();
+        g_last_error = std::string("ot_mesh_shape_fill: ") + e.what();
         return false;
     } catch (...) {
         g_last_error = "ot_mesh_shape_fill: unknown exception";
