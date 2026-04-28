@@ -88,6 +88,9 @@ OT_EXPORT OTViewerRef ot_viewer_create(int32_t width, int32_t height) {
         v->driver = new OpenGl_GraphicDriver(dispConn, false /* no message box */);
         v->driver->ChangeOptions().buffersNoSwap = true;
         v->driver->ChangeOptions().buffersOpaqueAlpha = true;
+        // Request OpenGL Core profile. macOS caps the compatibility profile at
+        // GL 2.1; Core gives us 4.1, which the ray tracer needs (>= 3.1).
+        v->driver->ChangeOptions().contextCompatible = false;
 
         // Create V3d_Viewer with 3-point lighting
         v->viewer = new V3d_Viewer(v->driver);

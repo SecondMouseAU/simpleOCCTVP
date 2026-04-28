@@ -213,6 +213,18 @@ if(BUILD_TESTS)
 endif()
 
 # --------------------
+# Examples
+# --------------------
+
+option(BUILD_EXAMPLES "Build example programs" ON)
+
+if(BUILD_EXAMPLES)
+    add_executable(render_quality_demo examples/render_quality_demo.cpp)
+    target_include_directories(render_quality_demo PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_link_libraries(render_quality_demo PRIVATE simpleOCCTVP)
+endif()
+
+# --------------------
 # Install
 # --------------------
 
