@@ -373,6 +373,90 @@ static void test_viewer_settings() {
     ot_viewer_destroy(viewer);
 }
 
+static void test_viewer_render_quality() {
+    OTViewerRef viewer = ot_viewer_create(320, 240);
+    if (!viewer) {
+        printf("  SKIP: could not create viewer\n");
+        return;
+    }
+
+    TEST("render preset DRAFT");
+    ot_viewer_set_render_preset(viewer, OT_PRESET_DRAFT);
+    PASS();
+
+    TEST("render preset BALANCED");
+    ot_viewer_set_render_preset(viewer, OT_PRESET_BALANCED);
+    PASS();
+
+    TEST("render preset PHOTOREALISTIC");
+    ot_viewer_set_render_preset(viewer, OT_PRESET_PHOTOREALISTIC);
+    PASS();
+
+    TEST("set rendering method (raster)");
+    ot_viewer_set_rendering_method(viewer, OT_RENDER_RASTERIZATION);
+    PASS();
+
+    TEST("set rendering method (raytrace)");
+    ot_viewer_set_rendering_method(viewer, OT_RENDER_RAYTRACING);
+    PASS();
+
+    TEST("path tracing on");
+    ot_viewer_set_path_tracing(viewer, true);
+    PASS();
+
+    TEST("samples per pixel");
+    ot_viewer_set_samples_per_pixel(viewer, 64);
+    PASS();
+
+    TEST("ray depth");
+    ot_viewer_set_ray_depth(viewer, 8);
+    PASS();
+
+    TEST("shadows on");
+    ot_viewer_set_shadows(viewer, true, true);
+    PASS();
+
+    TEST("reflections on");
+    ot_viewer_set_reflections(viewer, true);
+    PASS();
+
+    TEST("antialiasing on");
+    ot_viewer_set_antialiasing(viewer, true);
+    PASS();
+
+    TEST("filmic tone mapping");
+    ot_viewer_set_tone_mapping(viewer, OT_TONEMAP_FILMIC, 0.5, 1.2);
+    PASS();
+
+    TEST("depth of field");
+    ot_viewer_set_depth_of_field(viewer, 0.05, 100.0);
+    PASS();
+
+    TEST("shading model PBR");
+    ot_viewer_set_shading_model(viewer, OT_SHADING_PBR);
+    PASS();
+
+    OTShapeRef shape = create_test_box();
+    if (shape) {
+        int32_t id = ot_viewer_add_shape(viewer, shape, OT_DISPLAY_SHADED);
+        if (id > 0) {
+            TEST("set PBR material");
+            bool ok = ot_viewer_set_shape_pbr_material(viewer, id,
+                0.85, 0.65, 0.20,   /* gold-like albedo */
+                1.0,                /* fully metallic */
+                0.25);              /* moderate roughness */
+            if (ok) PASS(); else FAIL(occt_templot_last_error());
+
+            TEST("set emission");
+            ok = ot_viewer_set_shape_emission(viewer, id, 1.0, 0.4, 0.1, 2.0);
+            if (ok) PASS(); else FAIL(occt_templot_last_error());
+        }
+        ot_shape_free(shape);
+    }
+
+    ot_viewer_destroy(viewer);
+}
+
 int main(int /*argc*/, char* /*argv*/[]) {
     printf("=== occt_templot Viewer tests ===\n\n");
 
@@ -392,6 +476,9 @@ int main(int /*argc*/, char* /*argv*/[]) {
 
     printf("\n--- Display settings ---\n");
     test_viewer_settings();
+
+    printf("\n--- Rendering quality (CADRays-style) ---\n");
+    test_viewer_render_quality();
 
     occt_templot_shutdown();
 

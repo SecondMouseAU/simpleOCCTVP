@@ -346,6 +346,39 @@ typedef enum {
     OT_PROJECTION_ORTHOGRAPHIC  = 1
 } OTProjectionType;
 
+/** Rendering method (rasterization vs ray tracing). */
+typedef enum {
+    OT_RENDER_RASTERIZATION = 0,
+    OT_RENDER_RAYTRACING    = 1
+} OTRenderingMethod;
+
+/** Tone mapping method applied to the final image. */
+typedef enum {
+    OT_TONEMAP_DISABLED = 0,
+    OT_TONEMAP_FILMIC   = 1
+} OTToneMappingMethod;
+
+/** Surface shading model. PBR/PBR_FACET expect physically-based materials. */
+typedef enum {
+    OT_SHADING_DEFAULT   = 0,  /**< Phong (current OCCT default) */
+    OT_SHADING_PHONG     = 1,
+    OT_SHADING_PBR       = 2,  /**< Physically-based (smooth normals) */
+    OT_SHADING_PBR_FACET = 3,  /**< Physically-based (faceted normals) */
+    OT_SHADING_UNLIT     = 4   /**< No lighting; albedo only */
+} OTShadingModel;
+
+/**
+ * High-level rendering quality preset.
+ * DRAFT          — rasterization, no shadows/reflections, 4x MSAA. Fastest interactive path.
+ * BALANCED       — rasterization + shadows + reflections + 8x MSAA + filmic tone mapping. Default.
+ * PHOTOREALISTIC — ray traced path tracing (256 spp, 8 bounces) + filmic tone mapping. Slow.
+ */
+typedef enum {
+    OT_PRESET_DRAFT          = 0,
+    OT_PRESET_BALANCED       = 1,
+    OT_PRESET_PHOTOREALISTIC = 2
+} OTRenderPreset;
+
 /* ================================================================
  * Edge Mesh Data
  * ================================================================ */
@@ -529,8 +562,106 @@ OT_EXPORT void ot_viewer_set_edge_color(OTViewerRef viewer, double r, double g, 
 /** Set mesh deflection for subsequently added shapes. */
 OT_EXPORT void ot_viewer_set_deflection(OTViewerRef viewer, double deflection);
 
-/** Set MSAA sample count (0, 2, 4, 8). */
+/** Set MSAA sample count (0, 2, 4, 8). Rasterization only. */
 OT_EXPORT void ot_viewer_set_msaa(OTViewerRef viewer, int32_t samples);
+
+/* ================================================================
+ * Offscreen Viewer — Rendering Quality (CADRays-style)
+ * ================================================================
+ *
+ * These knobs map onto OCCT's Graphic3d_RenderingParams. They configure
+ * the same GPU path that the Open CASCADE CADRays application uses for
+ * physically-based visualization. All are no-ops on viewers created
+ * without a working OpenGL context.
+ */
+
+/**
+ * Apply a rendering quality preset. This is a one-call shortcut that
+ * configures method, shadows, reflections, AA, samples per pixel, and
+ * tone mapping in one go. After calling, individual setters below can
+ * still be used to override specific knobs.
+ */
+OT_EXPORT void ot_viewer_set_render_preset(OTViewerRef viewer, OTRenderPreset preset);
+
+/** Switch between OpenGL rasterization and ray-traced rendering. */
+OT_EXPORT void ot_viewer_set_rendering_method(OTViewerRef viewer, OTRenderingMethod method);
+
+/**
+ * Toggle path-traced global illumination. Requires OT_RENDER_RAYTRACING.
+ * When enabled, the renderer performs progressive path tracing using
+ * the configured samples-per-pixel and ray-depth.
+ */
+OT_EXPORT void ot_viewer_set_path_tracing(OTViewerRef viewer, bool enabled);
+
+/** Samples per pixel for path tracing (e.g. 1=preview, 64=fast, 256=quality). */
+OT_EXPORT void ot_viewer_set_samples_per_pixel(OTViewerRef viewer, int32_t spp);
+
+/** Maximum ray recursion depth (3=fast, 8=balanced, 16=glass-heavy scenes). */
+OT_EXPORT void ot_viewer_set_ray_depth(OTViewerRef viewer, int32_t depth);
+
+/**
+ * Enable shadows. transparent_shadows allows light to filter through
+ * transparent materials (slower; requires ray tracing for full effect).
+ */
+OT_EXPORT void ot_viewer_set_shadows(OTViewerRef viewer, bool enabled, bool transparent_shadows);
+
+/** Enable specular reflections. Most pronounced in ray tracing mode. */
+OT_EXPORT void ot_viewer_set_reflections(OTViewerRef viewer, bool enabled);
+
+/** Enable adaptive anti-aliasing (separate from the MSAA sample count). */
+OT_EXPORT void ot_viewer_set_antialiasing(OTViewerRef viewer, bool enabled);
+
+/**
+ * Configure tone mapping for HDR-to-LDR conversion of the rendered image.
+ * @param method      OT_TONEMAP_DISABLED (raw) or OT_TONEMAP_FILMIC
+ * @param exposure    EV adjustment (0.0 = unchanged, +1.0 = 2x brighter)
+ * @param white_point White-point luminance for filmic mapping (1.0 = default)
+ */
+OT_EXPORT void ot_viewer_set_tone_mapping(OTViewerRef viewer,
+    OTToneMappingMethod method, double exposure, double white_point);
+
+/**
+ * Configure depth of field (path tracing only).
+ * @param aperture_radius  Lens aperture in scene units (0.0 = pinhole/disabled)
+ * @param focal_distance   Distance from camera to focal plane in scene units
+ */
+OT_EXPORT void ot_viewer_set_depth_of_field(OTViewerRef viewer,
+    double aperture_radius, double focal_distance);
+
+/** Set the surface shading model used for all subsequently rendered shapes. */
+OT_EXPORT void ot_viewer_set_shading_model(OTViewerRef viewer, OTShadingModel model);
+
+/**
+ * Set an environment cubemap from a single packed image (3x2 or 4x3 cross
+ * layout, auto-detected by OCCT). The cubemap provides image-based
+ * lighting for PBR shading and replaces the solid/gradient background
+ * when the environment background is enabled.
+ */
+OT_EXPORT bool ot_viewer_set_environment_cubemap(OTViewerRef viewer, const char* image_path);
+
+/** Clear any previously set environment cubemap. */
+OT_EXPORT void ot_viewer_clear_environment_cubemap(OTViewerRef viewer);
+
+/** Whether the environment cubemap is drawn as the background. */
+OT_EXPORT void ot_viewer_set_environment_background(OTViewerRef viewer, bool enabled);
+
+/**
+ * Set a physically-based material on a displayed shape. Affects both
+ * rasterized PBR shading and ray-traced rendering (BSDF auto-derived).
+ * @param albedo_r,g,b  Base color in linear RGB [0..1]
+ * @param metallic      Metallic-ness [0=dielectric, 1=metal]
+ * @param roughness     Surface roughness [0=mirror, 1=fully diffuse]
+ */
+OT_EXPORT bool ot_viewer_set_shape_pbr_material(OTViewerRef viewer, int32_t display_id,
+    double albedo_r, double albedo_g, double albedo_b,
+    double metallic, double roughness);
+
+/**
+ * Set the emissive component of a PBR shape (acts as an area light in
+ * path tracing). intensity scales the color (0 = non-emissive).
+ */
+OT_EXPORT bool ot_viewer_set_shape_emission(OTViewerRef viewer, int32_t display_id,
+    double r, double g, double b, double intensity);
 
 /* ================================================================
  * Standalone Camera — Lifecycle

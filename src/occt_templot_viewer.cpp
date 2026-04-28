@@ -30,11 +30,17 @@
 #include <Quantity_NameOfColor.hxx>
 #include <Graphic3d_MaterialAspect.hxx>
 #include <Graphic3d_NameOfMaterial.hxx>
+#include <Graphic3d_PBRMaterial.hxx>
+#include <Graphic3d_BSDF.hxx>
+#include <Graphic3d_RenderingParams.hxx>
+#include <Graphic3d_CubeMapPacked.hxx>
+#include <NCollection_Vec2.hxx>
+#include <NCollection_Vec3.hxx>
 #include <Prs3d_ShadingAspect.hxx>
 #include <Prs3d_LineAspect.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
-#include <NCollection_Vec2.hxx>
+#include <TCollection_AsciiString.hxx>
 
 #include <vector>
 #include <cstdlib>
@@ -139,10 +145,20 @@ OT_EXPORT OTViewerRef ot_viewer_create(int32_t width, int32_t height) {
         // Set default background
         v->view->SetBackgroundColor(Quantity_Color(0.2, 0.2, 0.3, Quantity_TOC_RGB));
 
-        // Rendering settings: 8x MSAA for smoother edges
-        v->view->ChangeRenderingParams().IsAntialiasingEnabled = true;
-        v->view->ChangeRenderingParams().NbMsaaSamples = 8;
-        v->view->ChangeRenderingParams().Method = Graphic3d_RM_RASTERIZATION;
+        // Default rendering: BALANCED preset (rasterization + shadows + reflections
+        // + 8x MSAA + filmic tone mapping). Callers can switch with
+        // ot_viewer_set_render_preset / ot_viewer_set_rendering_method.
+        {
+            auto& rp = v->view->ChangeRenderingParams();
+            rp.Method = Graphic3d_RM_RASTERIZATION;
+            rp.IsAntialiasingEnabled = true;
+            rp.NbMsaaSamples = 8;
+            rp.IsShadowEnabled = true;
+            rp.IsReflectionEnabled = true;
+            rp.ToneMappingMethod = Graphic3d_ToneMappingMethod_Filmic;
+            rp.Exposure = 0.0f;
+            rp.WhitePoint = 1.0f;
+        }
 
         // Auto Z-fit: adjust near/far planes each frame to prevent clipping
         v->view->SetAutoZFitMode(Graphic3d_ZLayerId_Default, 1.0);
@@ -730,6 +746,260 @@ OT_EXPORT void ot_viewer_set_msaa(OTViewerRef viewer, int32_t samples) {
     if (!viewer) return;
     auto* v = static_cast<OTViewerInternal*>(viewer);
     v->view->ChangeRenderingParams().NbMsaaSamples = samples;
+}
+
+/* ================================================================
+ * Rendering Quality (CADRays-style)
+ * ================================================================ */
+
+OT_EXPORT void ot_viewer_set_rendering_method(OTViewerRef viewer, OTRenderingMethod method) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().Method =
+        (method == OT_RENDER_RAYTRACING) ? Graphic3d_RM_RAYTRACING : Graphic3d_RM_RASTERIZATION;
+}
+
+OT_EXPORT void ot_viewer_set_path_tracing(OTViewerRef viewer, bool enabled) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    auto& rp = v->view->ChangeRenderingParams();
+    rp.IsGlobalIlluminationEnabled = enabled;
+    if (enabled) {
+        rp.Method = Graphic3d_RM_RAYTRACING;
+    }
+}
+
+OT_EXPORT void ot_viewer_set_samples_per_pixel(OTViewerRef viewer, int32_t spp) {
+    if (!viewer || spp < 1) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().SamplesPerPixel = spp;
+}
+
+OT_EXPORT void ot_viewer_set_ray_depth(OTViewerRef viewer, int32_t depth) {
+    if (!viewer || depth < 1) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().RaytracingDepth = depth;
+}
+
+OT_EXPORT void ot_viewer_set_shadows(OTViewerRef viewer, bool enabled, bool transparent_shadows) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    auto& rp = v->view->ChangeRenderingParams();
+    rp.IsShadowEnabled = enabled;
+    rp.IsTransparentShadowEnabled = enabled && transparent_shadows;
+}
+
+OT_EXPORT void ot_viewer_set_reflections(OTViewerRef viewer, bool enabled) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().IsReflectionEnabled = enabled;
+}
+
+OT_EXPORT void ot_viewer_set_antialiasing(OTViewerRef viewer, bool enabled) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().IsAntialiasingEnabled = enabled;
+}
+
+OT_EXPORT void ot_viewer_set_tone_mapping(OTViewerRef viewer,
+    OTToneMappingMethod method, double exposure, double white_point) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    auto& rp = v->view->ChangeRenderingParams();
+    rp.ToneMappingMethod = (method == OT_TONEMAP_FILMIC)
+        ? Graphic3d_ToneMappingMethod_Filmic
+        : Graphic3d_ToneMappingMethod_Disabled;
+    rp.Exposure = static_cast<float>(exposure);
+    rp.WhitePoint = static_cast<float>(white_point);
+}
+
+OT_EXPORT void ot_viewer_set_depth_of_field(OTViewerRef viewer,
+    double aperture_radius, double focal_distance) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    auto& rp = v->view->ChangeRenderingParams();
+    rp.CameraApertureRadius = static_cast<float>(aperture_radius);
+    if (focal_distance > 0.0) {
+        rp.CameraFocalPlaneDist = static_cast<float>(focal_distance);
+    }
+}
+
+OT_EXPORT void ot_viewer_set_shading_model(OTViewerRef viewer, OTShadingModel model) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    Graphic3d_TypeOfShadingModel sm = Graphic3d_TypeOfShadingModel_DEFAULT;
+    switch (model) {
+        case OT_SHADING_DEFAULT:   sm = Graphic3d_TypeOfShadingModel_DEFAULT; break;
+        case OT_SHADING_PHONG:     sm = Graphic3d_TypeOfShadingModel_Phong; break;
+        case OT_SHADING_PBR:       sm = Graphic3d_TypeOfShadingModel_Pbr; break;
+        case OT_SHADING_PBR_FACET: sm = Graphic3d_TypeOfShadingModel_PbrFacet; break;
+        case OT_SHADING_UNLIT:     sm = Graphic3d_TypeOfShadingModel_Unlit; break;
+    }
+    v->view->ChangeRenderingParams().ShadingModel = sm;
+}
+
+OT_EXPORT void ot_viewer_set_render_preset(OTViewerRef viewer, OTRenderPreset preset) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    auto& rp = v->view->ChangeRenderingParams();
+
+    switch (preset) {
+        case OT_PRESET_DRAFT:
+            rp.Method = Graphic3d_RM_RASTERIZATION;
+            rp.IsGlobalIlluminationEnabled = false;
+            rp.IsShadowEnabled = false;
+            rp.IsReflectionEnabled = false;
+            rp.IsAntialiasingEnabled = false;
+            rp.NbMsaaSamples = 4;
+            rp.ToneMappingMethod = Graphic3d_ToneMappingMethod_Disabled;
+            break;
+        case OT_PRESET_BALANCED:
+            rp.Method = Graphic3d_RM_RASTERIZATION;
+            rp.IsGlobalIlluminationEnabled = false;
+            rp.IsShadowEnabled = true;
+            rp.IsTransparentShadowEnabled = false;
+            rp.IsReflectionEnabled = true;
+            rp.IsAntialiasingEnabled = true;
+            rp.NbMsaaSamples = 8;
+            rp.ToneMappingMethod = Graphic3d_ToneMappingMethod_Filmic;
+            rp.Exposure = 0.0f;
+            rp.WhitePoint = 1.0f;
+            break;
+        case OT_PRESET_PHOTOREALISTIC:
+            rp.Method = Graphic3d_RM_RAYTRACING;
+            rp.IsGlobalIlluminationEnabled = true;
+            rp.IsShadowEnabled = true;
+            rp.IsTransparentShadowEnabled = true;
+            rp.IsReflectionEnabled = true;
+            rp.IsAntialiasingEnabled = true;
+            rp.SamplesPerPixel = 256;
+            rp.RaytracingDepth = 8;
+            rp.RadianceClampingValue = 30.0f;
+            rp.TwoSidedBsdfModels = true;
+            rp.ToneMappingMethod = Graphic3d_ToneMappingMethod_Filmic;
+            rp.Exposure = 0.0f;
+            rp.WhitePoint = 1.0f;
+            break;
+    }
+}
+
+OT_EXPORT bool ot_viewer_set_environment_cubemap(OTViewerRef viewer, const char* image_path) {
+    if (!viewer || !image_path) {
+        g_last_error = "ot_viewer_set_environment_cubemap: NULL argument";
+        return false;
+    }
+    try {
+        auto* v = static_cast<OTViewerInternal*>(viewer);
+        Handle(Graphic3d_CubeMapPacked) cubemap =
+            new Graphic3d_CubeMapPacked(TCollection_AsciiString(image_path));
+        v->view->SetBackgroundCubeMap(cubemap, true /* updatePBR */, false);
+        v->view->ChangeRenderingParams().UseEnvironmentMapBackground = true;
+        g_last_error.clear();
+        return true;
+    } catch (const Standard_Failure& e) {
+        g_last_error = std::string("ot_viewer_set_environment_cubemap: ") + e.what();
+        return false;
+    } catch (...) {
+        g_last_error = "ot_viewer_set_environment_cubemap: unknown exception";
+        return false;
+    }
+}
+
+OT_EXPORT void ot_viewer_clear_environment_cubemap(OTViewerRef viewer) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->SetBackgroundCubeMap(Handle(Graphic3d_CubeMap)(), true, false);
+    v->view->ChangeRenderingParams().UseEnvironmentMapBackground = false;
+}
+
+OT_EXPORT void ot_viewer_set_environment_background(OTViewerRef viewer, bool enabled) {
+    if (!viewer) return;
+    auto* v = static_cast<OTViewerInternal*>(viewer);
+    v->view->ChangeRenderingParams().UseEnvironmentMapBackground = enabled;
+}
+
+OT_EXPORT bool ot_viewer_set_shape_pbr_material(OTViewerRef viewer, int32_t display_id,
+    double albedo_r, double albedo_g, double albedo_b,
+    double metallic, double roughness) {
+    if (!viewer || display_id < 1) return false;
+    try {
+        auto* v = static_cast<OTViewerInternal*>(viewer);
+        if (display_id > static_cast<int32_t>(v->shapes.size()) || v->shapes[display_id - 1].IsNull())
+            return false;
+
+        // Clamp inputs
+        auto clamp01 = [](double x) {
+            if (x < 0.0) return 0.0; if (x > 1.0) return 1.0; return x;
+        };
+        Quantity_Color albedo(clamp01(albedo_r), clamp01(albedo_g), clamp01(albedo_b),
+                              Quantity_TOC_RGB);
+        float met = static_cast<float>(clamp01(metallic));
+        float rgh = static_cast<float>(clamp01(roughness));
+
+        Graphic3d_MaterialAspect mat(Graphic3d_NameOfMaterial_DEFAULT);
+
+        // PBR side (rasterized PBR shading model)
+        Graphic3d_PBRMaterial pbr;
+        pbr.SetColor(albedo);
+        pbr.SetMetallic(met);
+        pbr.SetRoughness(rgh);
+        mat.SetPBRMaterial(pbr);
+
+        // BSDF side (path tracing). Pure metal at metallic=1, dielectric otherwise.
+        Graphic3d_PBRMaterial bsdfPbr = pbr;
+        mat.SetBSDF(Graphic3d_BSDF::CreateMetallicRoughness(bsdfPbr));
+
+        // Diffuse + ambient also set so non-PBR shading still looks reasonable
+        mat.SetColor(albedo);
+
+        v->context->SetMaterial(v->shapes[display_id - 1], mat, false);
+        v->context->SetColor(v->shapes[display_id - 1], albedo, false);
+        g_last_error.clear();
+        return true;
+    } catch (const Standard_Failure& e) {
+        g_last_error = std::string("ot_viewer_set_shape_pbr_material: ") + e.what();
+        return false;
+    } catch (...) {
+        g_last_error = "ot_viewer_set_shape_pbr_material: unknown exception";
+        return false;
+    }
+}
+
+OT_EXPORT bool ot_viewer_set_shape_emission(OTViewerRef viewer, int32_t display_id,
+    double r, double g, double b, double intensity) {
+    if (!viewer || display_id < 1) return false;
+    try {
+        auto* v = static_cast<OTViewerInternal*>(viewer);
+        if (display_id > static_cast<int32_t>(v->shapes.size()) || v->shapes[display_id - 1].IsNull())
+            return false;
+
+        auto& aisShape = v->shapes[display_id - 1];
+        Graphic3d_MaterialAspect mat = aisShape->Attributes()->ShadingAspect()->Material();
+
+        const float er = static_cast<float>(r * intensity);
+        const float eg = static_cast<float>(g * intensity);
+        const float eb = static_cast<float>(b * intensity);
+
+        // Legacy emissive color is LDR-clamped to [0,1] (Quantity_Color requirement).
+        auto clamp01f = [](float x) { return x < 0.0f ? 0.0f : (x > 1.0f ? 1.0f : x); };
+        Quantity_Color emissive(clamp01f(er), clamp01f(eg), clamp01f(eb), Quantity_TOC_RGB);
+        mat.SetEmissiveColor(emissive);
+
+        // PBR emission accepts unclamped HDR values (acts as area light in path tracing).
+        Graphic3d_PBRMaterial pbr = mat.PBRMaterial();
+        pbr.SetEmission(NCollection_Vec3<float>(er, eg, eb));
+        mat.SetPBRMaterial(pbr);
+
+        v->context->SetMaterial(aisShape, mat, false);
+        g_last_error.clear();
+        return true;
+    } catch (const Standard_Failure& e) {
+        g_last_error = std::string("ot_viewer_set_shape_emission: ") + e.what();
+        return false;
+    } catch (...) {
+        g_last_error = "ot_viewer_set_shape_emission: unknown exception";
+        return false;
+    }
 }
 
 } // extern "C"

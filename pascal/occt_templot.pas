@@ -57,6 +57,26 @@ const
   OT_PROJECTION_PERSPECTIVE  = 0;
   OT_PROJECTION_ORTHOGRAPHIC = 1;
 
+  { Rendering method (rasterization vs ray tracing) }
+  OT_RENDER_RASTERIZATION = 0;
+  OT_RENDER_RAYTRACING    = 1;
+
+  { Tone mapping methods }
+  OT_TONEMAP_DISABLED = 0;
+  OT_TONEMAP_FILMIC   = 1;
+
+  { Surface shading models }
+  OT_SHADING_DEFAULT   = 0;
+  OT_SHADING_PHONG     = 1;
+  OT_SHADING_PBR       = 2;
+  OT_SHADING_PBR_FACET = 3;
+  OT_SHADING_UNLIT     = 4;
+
+  { Render quality presets }
+  OT_PRESET_DRAFT          = 0;
+  OT_PRESET_BALANCED       = 1;
+  OT_PRESET_PHOTOREALISTIC = 2;
+
 type
   { Opaque handle to a shape. }
   OTShapeRef = Pointer;
@@ -264,6 +284,26 @@ procedure ot_viewer_set_edge_display(viewer: OTViewerRef; enabled: Boolean); cde
 procedure ot_viewer_set_edge_color(viewer: OTViewerRef; r, g, b: Double); cdecl; external OCCT_LIB;
 procedure ot_viewer_set_deflection(viewer: OTViewerRef; deflection: Double); cdecl; external OCCT_LIB;
 procedure ot_viewer_set_msaa(viewer: OTViewerRef; samples: Int32); cdecl; external OCCT_LIB;
+
+{ Rendering Quality (CADRays-style) }
+procedure ot_viewer_set_render_preset(viewer: OTViewerRef; preset: Int32); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_rendering_method(viewer: OTViewerRef; method: Int32); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_path_tracing(viewer: OTViewerRef; enabled: Boolean); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_samples_per_pixel(viewer: OTViewerRef; spp: Int32); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_ray_depth(viewer: OTViewerRef; depth: Int32); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_shadows(viewer: OTViewerRef; enabled: Boolean; transparent_shadows: Boolean); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_reflections(viewer: OTViewerRef; enabled: Boolean); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_antialiasing(viewer: OTViewerRef; enabled: Boolean); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_tone_mapping(viewer: OTViewerRef; method: Int32; exposure, white_point: Double); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_depth_of_field(viewer: OTViewerRef; aperture_radius, focal_distance: Double); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_shading_model(viewer: OTViewerRef; model: Int32); cdecl; external OCCT_LIB;
+function  ot_viewer_set_environment_cubemap(viewer: OTViewerRef; image_path: PAnsiChar): Boolean; cdecl; external OCCT_LIB;
+procedure ot_viewer_clear_environment_cubemap(viewer: OTViewerRef); cdecl; external OCCT_LIB;
+procedure ot_viewer_set_environment_background(viewer: OTViewerRef; enabled: Boolean); cdecl; external OCCT_LIB;
+function  ot_viewer_set_shape_pbr_material(viewer: OTViewerRef; display_id: Int32;
+  albedo_r, albedo_g, albedo_b, metallic, roughness: Double): Boolean; cdecl; external OCCT_LIB;
+function  ot_viewer_set_shape_emission(viewer: OTViewerRef; display_id: Int32;
+  r, g, b, intensity: Double): Boolean; cdecl; external OCCT_LIB;
 
 { ================================================================
   Standalone Camera — Lifecycle

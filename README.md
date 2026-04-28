@@ -11,6 +11,7 @@ A C++17 shared library providing a pure C API over [OpenCASCADE](https://dev.ope
 - **Offscreen Rendering** -- V3d-based offscreen viewer with OpenGL
 - **Camera Control** -- Standalone camera with projection/view matrices, project/unproject
 - **Display Drawer** -- Configurable tessellation parameters
+- **CADRays-style Rendering** -- Path-traced GI, PBR materials, filmic tone mapping, depth of field, environment cubemaps, and one-call quality presets
 
 ## Supported Platforms
 
@@ -306,6 +307,28 @@ All functions use cdecl calling convention and are prefixed with `ot_`. The full
 | `ot_viewer_set_camera(viewer, ...)` | Set eye, center, up vectors. |
 | `ot_viewer_set_background_color(viewer, r, g, b)` | Set solid background. |
 | `ot_viewer_set_background_gradient(viewer, ...)` | Set gradient background. |
+
+### Rendering Quality (CADRays-style)
+
+These map onto OCCT's `Graphic3d_RenderingParams` — the same GPU rendering path the [CADRays](https://github.com/Open-Cascade-SAS/CADRays) application uses.
+
+| Function | Description |
+|----------|-------------|
+| `ot_viewer_set_render_preset(viewer, preset)` | One-call quality preset: `0`=DRAFT, `1`=BALANCED (default), `2`=PHOTOREALISTIC. |
+| `ot_viewer_set_rendering_method(viewer, method)` | `0`=rasterization, `1`=ray tracing. |
+| `ot_viewer_set_path_tracing(viewer, enabled)` | Toggle path-traced global illumination (forces ray tracing). |
+| `ot_viewer_set_samples_per_pixel(viewer, spp)` | Path-tracing samples per pixel (1=preview, 256=quality). |
+| `ot_viewer_set_ray_depth(viewer, depth)` | Max ray recursion depth (3=fast, 16=glass). |
+| `ot_viewer_set_shadows(viewer, on, transparent_on)` | Enable shadows; transparent shadows let light filter through glass. |
+| `ot_viewer_set_reflections(viewer, on)` | Enable specular reflections. |
+| `ot_viewer_set_antialiasing(viewer, on)` | Enable adaptive AA (separate from MSAA). |
+| `ot_viewer_set_tone_mapping(viewer, method, exposure, white)` | `0`=disabled, `1`=filmic. |
+| `ot_viewer_set_depth_of_field(viewer, aperture, focal)` | Depth-of-field (path tracing only; aperture=0 disables). |
+| `ot_viewer_set_shading_model(viewer, model)` | `0`=default (Phong), `2`=PBR, `3`=PBR-facet, `4`=unlit. |
+| `ot_viewer_set_environment_cubemap(viewer, image_path)` | Load a packed cubemap for IBL + background. |
+| `ot_viewer_set_environment_background(viewer, on)` | Use the cubemap as background. |
+| `ot_viewer_set_shape_pbr_material(viewer, id, r, g, b, metallic, roughness)` | Per-shape PBR material (also sets BSDF for ray tracing). |
+| `ot_viewer_set_shape_emission(viewer, id, r, g, b, intensity)` | Make a shape emissive (acts as area light in path tracing). |
 
 ### Standalone Camera
 
