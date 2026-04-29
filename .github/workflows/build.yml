@@ -44,6 +44,7 @@ jobs:
 
       - name: Upload DLL
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # don't fail CI when account-wide artifact quota is full
         with:
           name: simpleOCCTVP-windows-x64
           path: build/Release/simpleOCCTVP.dll
@@ -75,6 +76,7 @@ jobs:
 
       - name: Upload dylib
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # don't fail CI when account-wide artifact quota is full
         with:
           name: simpleOCCTVP-macos-arm64
           path: build/libsimpleOCCTVP.dylib
@@ -119,6 +121,7 @@ jobs:
 
       - name: Upload .so
         uses: actions/upload-artifact@v4
+        continue-on-error: true   # don't fail CI when account-wide artifact quota is full
         with:
           name: simpleOCCTVP-linux-x64
           path: build/libsimpleOCCTVP.so*
