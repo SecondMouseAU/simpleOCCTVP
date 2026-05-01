@@ -18,8 +18,10 @@
 set -e
 
 OCCT_VERSION="8.0.0"
-OCCT_RC="rc5"
-# RC tags use format V8_0_0_rc3, release uses V8_0_0
+# Use beta1 (feature-frozen 2026-04-30; final 8.0.0 planned 2026-05-07).
+# Switch to "" once the final V8_0_0 tag is published.
+OCCT_RC="beta1"
+# Pre-release tags use format V8_0_0_rc5 / V8_0_0_beta1; release uses V8_0_0
 if [ -n "$OCCT_RC" ]; then
     OCCT_TAG="V${OCCT_VERSION//./_}_${OCCT_RC}"
 else
