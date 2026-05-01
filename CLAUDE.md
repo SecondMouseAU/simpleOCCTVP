@@ -40,6 +40,8 @@ On headless Linux the viewer test needs `xvfb-run ctest …`. CI on all three pl
 
 **Error reporting.** Functions return `NULL`/`false` and write a message to `thread_local std::string g_last_error`. Callers retrieve it via `occt_templot_last_error()`. All public-facing implementations should `try { … } catch (Standard_Failure& e) { g_last_error = …; return …; }` around OCCT calls — OCCT throws on bad input.
 
+**Diagnostic tracing.** Off by default. Enable via `OCCT_TEMPLOT_TRACE=1` env var or by calling `ot_set_trace(true)` from a host language. When on, `OT_TRACE(...)` lines from `occt_templot_*.cpp` flush to stderr immediately (so a hung call is still visible), and OCCT's own `Message::DefaultMessenger()` is wired to stderr so internal `ShapeFix` / `Sewing` / `BRepCheck` output surfaces too. Helper lives in `src/occt_templot_trace.{h,cpp}`. When adding a new long-running function, bracket the OCCT call with `OT_TRACE("ot_foo: phase X start")` / `OT_TRACE("ot_foo: phase X done")` so a stuck call is localisable from the log.
+
 **Memory ownership.** Anything returned from `ot_*` that isn't a primitive must be paired with a free function: `ot_shape_free`, `ot_mesh_free`, `ot_edge_mesh_free`, `ot_viewer_destroy`, `ot_camera_destroy`, `ot_drawer_destroy`. The `OTMeshData` / `OTEdgeMeshData` structs hold heap-allocated arrays — the corresponding free functions zero out the struct so double-free is safe.
 
 ## OCCT dependency
