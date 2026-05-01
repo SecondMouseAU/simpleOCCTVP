@@ -33,7 +33,8 @@
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <Message_ProgressRange.hxx>
-#include <TColStd_IndexedDataMapOfStringString.hxx>
+#include <NCollection_IndexedDataMap.hxx>
+#include <TCollection_AsciiString.hxx>
 
 // Healing (used by robust import)
 #include <BRepBuilderAPI_Sewing.hxx>
@@ -322,7 +323,7 @@ OT_EXPORT OTShapeRef ot_import_step_robust(const char* path) {
             shapeType == TopAbs_FACE) {
 
             BRepBuilderAPI_Sewing sewing(1.0e-4);
-            sewing.SetNonManifoldMode(Standard_False);
+            sewing.SetNonManifoldMode(false);
             sewing.Add(shape);
             sewing.Perform();
             TopoDS_Shape sewedShape = sewing.SewedShape();
@@ -398,7 +399,7 @@ OT_EXPORT OTImportResult ot_import_step_with_diagnostics(const char* path) {
         if (shape.ShapeType() != TopAbs_SOLID) {
             // Try sewing
             BRepBuilderAPI_Sewing sewing(1.0e-4);
-            sewing.SetNonManifoldMode(Standard_False);
+            sewing.SetNonManifoldMode(false);
             sewing.Add(shape);
             sewing.Perform();
             TopoDS_Shape sewedShape = sewing.SewedShape();
@@ -579,7 +580,7 @@ OT_EXPORT bool ot_export_stl(OTShapeRef shape, const char* path, double deflecti
         mesher.Perform();
 
         StlAPI_Writer writer;
-        writer.ASCIIMode() = Standard_False; // Binary STL for smaller files
+        writer.ASCIIMode() = false; // Binary STL for smaller files
         bool result = writer.Write(s->shape, path);
 
         if (!result) {
@@ -694,7 +695,7 @@ OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflecti
 
         // Write OBJ
         RWObj_CafWriter writer(path);
-        bool success = writer.Perform(doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange());
+        bool success = writer.Perform(doc, NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString>(), Message_ProgressRange());
 
         app->Close(doc);
 
@@ -737,7 +738,7 @@ OT_EXPORT bool ot_export_ply(OTShapeRef shape, const char* path, double deflecti
         // Write PLY
         RWPly_CafWriter writer(path);
         writer.SetNormals(true);
-        bool success = writer.Perform(doc, TColStd_IndexedDataMapOfStringString(), Message_ProgressRange());
+        bool success = writer.Perform(doc, NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString>(), Message_ProgressRange());
 
         app->Close(doc);
 
