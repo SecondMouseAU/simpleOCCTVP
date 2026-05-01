@@ -47,6 +47,7 @@ set(SOURCES
     src/occt_templot_mesh.cpp
     src/occt_templot_viewer.cpp
     src/occt_templot_render_data.cpp
+    src/occt_templot_trace.cpp
 )
 
 add_library(simpleOCCTVP SHARED ${SOURCES})

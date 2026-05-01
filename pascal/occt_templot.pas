@@ -139,6 +139,10 @@ procedure occt_templot_shutdown; cdecl; external OCCT_LIB;
 function  occt_templot_version: PAnsiChar; cdecl; external OCCT_LIB;
 function  occt_templot_last_error: PAnsiChar; cdecl; external OCCT_LIB;
 
+{ Diagnostic tracing — also gated by env var OCCT_TEMPLOT_TRACE=1 }
+procedure ot_set_trace(enable: Boolean); cdecl; external OCCT_LIB;
+function  ot_get_trace: Boolean; cdecl; external OCCT_LIB;
+
 { ================================================================
   Shape Handle
   ================================================================ }

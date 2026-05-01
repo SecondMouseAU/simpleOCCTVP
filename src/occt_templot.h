@@ -47,6 +47,15 @@ OT_EXPORT const char* occt_templot_version(void);
 /** Return the last error message, or NULL if no error. Thread-local. */
 OT_EXPORT const char* occt_templot_last_error(void);
 
+/** Enable/disable diagnostic tracing to stderr at runtime.
+ *  Also activated by setting the OCCT_TEMPLOT_TRACE=1 environment variable
+ *  before the library loads. When on, ot_* function entry/exit lines and
+ *  OCCT's internal Messenger output are flushed to stderr. */
+OT_EXPORT void ot_set_trace(bool enable);
+
+/** Returns the current trace state. */
+OT_EXPORT bool ot_get_trace(void);
+
 /* ================================================================
  * Shape Handle (opaque)
  * ================================================================ */

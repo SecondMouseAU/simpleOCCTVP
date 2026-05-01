@@ -7,6 +7,7 @@
 
 #include "occt_templot.h"
 #include "occt_templot_internal.h"
+#include "occt_templot_trace.h"
 
 #include <fstream>
 #include <vector>
@@ -55,6 +56,8 @@ extern "C" {
 
 OT_EXPORT void occt_templot_init(void) {
     g_initialized = true;
+    ::ot_trace::install_occt_printer();
+    OT_TRACE("occt_templot_init: trace=%d", ::ot_trace::enabled() ? 1 : 0);
 }
 
 OT_EXPORT void occt_templot_shutdown(void) {
