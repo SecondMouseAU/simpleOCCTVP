@@ -48,6 +48,7 @@ set(SOURCES
     src/occt_templot_viewer.cpp
     src/occt_templot_render_data.cpp
     src/occt_templot_trace.cpp
+    src/occt_templot_builder.cpp
 )
 
 add_library(simpleOCCTVP SHARED ${SOURCES})
@@ -207,10 +208,15 @@ if(BUILD_TESTS)
     target_include_directories(test_render_data PRIVATE ${CMAKE_SOURCE_DIR}/src)
     target_link_libraries(test_render_data PRIVATE simpleOCCTVP)
 
+    add_executable(test_builder tests/test_builder.cpp)
+    target_include_directories(test_builder PRIVATE ${CMAKE_SOURCE_DIR}/src)
+    target_link_libraries(test_builder PRIVATE simpleOCCTVP)
+
     add_test(NAME test_io COMMAND test_io)
     add_test(NAME test_heal COMMAND test_heal)
     add_test(NAME test_viewer COMMAND test_viewer)
     add_test(NAME test_render_data COMMAND test_render_data)
+    add_test(NAME test_builder COMMAND test_builder)
 endif()
 
 # --------------------

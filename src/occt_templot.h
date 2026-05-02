@@ -63,6 +63,12 @@ OT_EXPORT bool ot_get_trace(void);
 /** Opaque handle to a shape. */
 typedef void* OTShapeRef;
 
+/** Opaque handle to a parametric BRep builder. See "Builder API" below. */
+typedef void* OTBuilderRef;
+
+/** Index into a builder's component table. Negative = error. */
+typedef int32_t OTComponentRef;
+
 /** Free a shape handle. Safe to call with NULL. */
 OT_EXPORT void ot_shape_free(OTShapeRef shape);
 
@@ -769,6 +775,153 @@ OT_EXPORT OTMeshData ot_mesh_shape_with_drawer(OTShapeRef shape, OTDrawerRef dra
 
 /** Extract edge mesh using drawer settings for tessellation. */
 OT_EXPORT OTEdgeMeshData ot_edge_mesh_shape_with_drawer(OTShapeRef shape, OTDrawerRef drawer);
+
+/* ================================================================
+ * Builder API — parametric BRep construction
+ *
+ * Replaces per-facet ASCII STL emission for assemblies with many
+ * repeated components (chairs, jaws, bolts, nails, …). Workflow:
+ *
+ *     b   = ot_builder_create();
+ *     comp = ot_component_cone(b, rbot, rtop, height);
+ *     for each instance:
+ *         ot_builder_place(b, comp, x, y, z, yaw, layer);
+ *     shape = ot_builder_finalize(b);   // OTShapeRef — caller frees
+ *     ot_export_step(shape, path);      // or use the assembly variant
+ *     ot_shape_free(shape);
+ *     ot_builder_destroy(b);
+ *
+ * Component reuse via TopLoc_Location keeps both memory and STEP file
+ * size bounded by the number of *unique* components, not placements.
+ * ================================================================ */
+
+/** Create an empty builder. Returns NULL on failure. */
+OT_EXPORT OTBuilderRef ot_builder_create(void);
+
+/** Destroy a builder and release its components. Safe to call with NULL. */
+OT_EXPORT void ot_builder_destroy(OTBuilderRef builder);
+
+/**
+ * Finalise the builder into a shape handle (a TopoDS_Compound containing
+ * one located instance per ot_builder_place call).
+ * Returns a new OTShapeRef the caller must release with ot_shape_free,
+ * or NULL on failure.
+ * The builder remains usable; further place calls extend the same compound.
+ */
+OT_EXPORT OTShapeRef ot_builder_finalize(OTBuilderRef builder);
+
+/**
+ * Add a truncated cone (or cylinder if rbot == rtop) component.
+ * Bottom radius rbot at z=0, top radius rtop at z=h.
+ * Returns the component index (≥ 0) or -1 on failure.
+ */
+OT_EXPORT OTComponentRef ot_component_cone(OTBuilderRef builder,
+                                           double rbot, double rtop, double h);
+
+/** Axis-aligned box, anchored at the origin, dimensions dx*dy*dz. */
+OT_EXPORT OTComponentRef ot_component_box(OTBuilderRef builder,
+                                          double dx, double dy, double dz);
+
+/** Cylinder of radius r and height h, axis along +Z, base at z=0. */
+OT_EXPORT OTComponentRef ot_component_cylinder(OTBuilderRef builder,
+                                               double r, double h);
+
+/**
+ * Regular hexagonal prism with the given across-flats distance and height,
+ * axis along +Z. Useful for nuts and hex bolt heads.
+ */
+OT_EXPORT OTComponentRef ot_component_hex_prism(OTBuilderRef builder,
+                                                double across_flats, double h);
+
+/**
+ * Extruded planar profile: builds a closed polygon from n_pts (x, y) pairs
+ * (xy is laid out as x0, y0, x1, y1, …) and extrudes it +Z by depth.
+ * The polygon is automatically closed; do not duplicate the first point.
+ */
+OT_EXPORT OTComponentRef ot_component_extrude(OTBuilderRef builder,
+                                              const double* xy, int32_t n_pts,
+                                              double depth);
+
+/**
+ * Axisymmetric solid of revolution about Z. The (r, z) profile defines the
+ * cross-section in the XZ half-plane; rz is laid out r0, z0, r1, z1, ….
+ * The wire is auto-closed.
+ */
+OT_EXPORT OTComponentRef ot_component_revolve(OTBuilderRef builder,
+                                              const double* rz, int32_t n_pts);
+
+/**
+ * Truncated rectangular pyramid (frustum) with separate base/top
+ * dimensions in X and Y. Used for support posts and similar tapered
+ * solids. Set top_w == base_w and top_l == base_l to get a plain box.
+ */
+OT_EXPORT OTComponentRef ot_component_pyramid(OTBuilderRef builder,
+                                              double base_w, double base_l,
+                                              double top_w, double top_l,
+                                              double h);
+
+/**
+ * Sweep a 2D profile along a 3D path — the natural way to model rails
+ * and other extruded sections that follow a curve. profile_xy is laid
+ * out x0,y0,x1,y1,… in the local XZ plane (Y=0); the sweep aligns the
+ * profile's local +Y with the first path tangent. path_xyz is laid
+ * out as x0,y0,z0,x1,y1,z1,… and is interpreted as a polyline.
+ */
+OT_EXPORT OTComponentRef ot_component_pipe_sweep(OTBuilderRef builder,
+                                                 const double* profile_xy,
+                                                 int32_t n_profile,
+                                                 const double* path_xyz,
+                                                 int32_t n_path);
+
+/**
+ * Drill a cylindrical hole through an existing component. Modifies the
+ * component shape in place. cx, cy are the cylinder centre in component
+ * coordinates; the cylinder runs along +Z by h.
+ *
+ * Note: BRepAlgoAPI_Cut is expensive — prefer building the profile with
+ * the hole already in it (multi-contour faces) where possible.
+ */
+OT_EXPORT bool ot_component_subtract_cylinder(OTBuilderRef builder,
+                                              OTComponentRef target,
+                                              double cx, double cy,
+                                              double r, double h);
+
+/**
+ * Tag a component with an RGB colour for XCAF assembly export. Values in
+ * [0..1]. The colour shows up in STEP files written via
+ * ot_export_step_assembly; the plain ot_export_step path ignores it.
+ */
+OT_EXPORT bool ot_component_set_color(OTBuilderRef builder,
+                                      OTComponentRef component,
+                                      double r, double g, double b);
+
+/**
+ * Tag a component with a string label used by ot_export_step_assembly
+ * (becomes the part name in the STEP assembly tree). Defaults to
+ * "comp_N" if not set.
+ */
+OT_EXPORT bool ot_component_set_name(OTBuilderRef builder,
+                                     OTComponentRef component,
+                                     const char* name);
+
+/**
+ * Place an instance of a previously-registered component at (x, y, z) with
+ * a yaw rotation (radians) about the world Z axis. The optional layer
+ * string tags the placement for later XCAF export. Returns false on error.
+ */
+OT_EXPORT bool ot_builder_place(OTBuilderRef builder,
+                                OTComponentRef component,
+                                double x, double y, double z, double yaw,
+                                const char* layer);
+
+/**
+ * Export the builder's assembly to a STEP file with full XCAF metadata:
+ * one part per registered component (with the colour and name attached
+ * via ot_component_set_color / ot_component_set_name), referenced once
+ * per placement. Downstream CAD tools see real instances rather than a
+ * flattened compound. Returns false on failure.
+ */
+OT_EXPORT bool ot_export_step_assembly(OTBuilderRef builder, const char* path);
 
 #ifdef __cplusplus
 }
