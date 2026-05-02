@@ -7,6 +7,7 @@
 
 #include "occt_templot.h"
 #include "occt_templot_internal.h"
+#include "occt_templot_trace.h"
 
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Tool.hxx>
@@ -35,15 +36,20 @@ OT_EXPORT OTMeshData ot_mesh_shape(OTShapeRef shape, double deflection) {
 
     if (!shape) {
         g_last_error = "ot_mesh_shape: shape is NULL";
+        OT_TRACE("ot_mesh_shape: NULL shape");
         return result;
     }
 
+    OT_TRACE("ot_mesh_shape: enter (deflection=%g)", deflection);
+    OT_TRACE_TIMER("ot_mesh_shape");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Generate mesh
+        OT_TRACE("ot_mesh_shape: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_mesh_shape: BRepMesh_IncrementalMesh::Perform done");
 
         // First pass: count vertices and triangles
         int32_t totalVerts = 0;
@@ -175,6 +181,7 @@ OT_EXPORT OTMeshData ot_mesh_shape(OTShapeRef shape, double deflection) {
         result.vertex_count = totalVerts;
         result.triangle_count = totalTris;
         g_last_error.clear();
+        OT_TRACE("ot_mesh_shape: exit ok (verts=%d tris=%d)", totalVerts, totalTris);
         return result;
 
     } catch (const Standard_Failure& e) {
@@ -182,12 +189,14 @@ OT_EXPORT OTMeshData ot_mesh_shape(OTShapeRef shape, double deflection) {
         free(result.indices);
         result = {nullptr, 0, nullptr, 0};
         g_last_error = std::string("ot_mesh_shape: ") + e.what();
+        OT_TRACE("ot_mesh_shape: Standard_Failure: %s", e.what());
         return result;
     } catch (...) {
         free(result.vertices);
         free(result.indices);
         result = {nullptr, 0, nullptr, 0};
         g_last_error = "ot_mesh_shape: unknown exception";
+        OT_TRACE("ot_mesh_shape: unknown exception");
         return result;
     }
 }
@@ -210,15 +219,20 @@ OT_EXPORT bool ot_mesh_shape_separate(OTShapeRef shape, double deflection,
     int32_t* out_vertex_count, int32_t* out_triangle_count) {
     if (!shape || !out_vertex_count || !out_triangle_count) {
         g_last_error = "ot_mesh_shape_separate: NULL argument";
+        OT_TRACE("ot_mesh_shape_separate: NULL argument");
         return false;
     }
 
+    OT_TRACE("ot_mesh_shape_separate: enter (deflection=%g)", deflection);
+    OT_TRACE_TIMER("ot_mesh_shape_separate");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Generate mesh
+        OT_TRACE("ot_mesh_shape_separate: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_mesh_shape_separate: BRepMesh_IncrementalMesh::Perform done");
 
         // Count vertices and triangles
         int32_t totalVerts = 0;
@@ -236,15 +250,19 @@ OT_EXPORT bool ot_mesh_shape_separate(OTShapeRef shape, double deflection,
         *out_vertex_count = totalVerts;
         *out_triangle_count = totalTris;
         g_last_error.clear();
+        OT_TRACE("ot_mesh_shape_separate: exit ok (verts=%d tris=%d)",
+                 totalVerts, totalTris);
         return (totalVerts > 0 && totalTris > 0);
 
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_mesh_shape_separate: ") + e.what();
+        OT_TRACE("ot_mesh_shape_separate: Standard_Failure: %s", e.what());
         *out_vertex_count = 0;
         *out_triangle_count = 0;
         return false;
     } catch (...) {
         g_last_error = "ot_mesh_shape_separate: unknown exception";
+        OT_TRACE("ot_mesh_shape_separate: unknown exception");
         *out_vertex_count = 0;
         *out_triangle_count = 0;
         return false;
@@ -255,9 +273,12 @@ OT_EXPORT bool ot_mesh_shape_fill(OTShapeRef shape,
     float* out_vertices, float* out_normals, int32_t* out_indices) {
     if (!shape || !out_vertices || !out_normals || !out_indices) {
         g_last_error = "ot_mesh_shape_fill: NULL argument";
+        OT_TRACE("ot_mesh_shape_fill: NULL argument");
         return false;
     }
 
+    OT_TRACE("ot_mesh_shape_fill: enter");
+    OT_TRACE_TIMER("ot_mesh_shape_fill");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
@@ -362,13 +383,17 @@ OT_EXPORT bool ot_mesh_shape_fill(OTShapeRef shape,
         }
 
         g_last_error.clear();
+        OT_TRACE("ot_mesh_shape_fill: exit ok (verts=%d tris=%d)",
+                 vertexOffset, triOffset);
         return true;
 
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_mesh_shape_fill: ") + e.what();
+        OT_TRACE("ot_mesh_shape_fill: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_mesh_shape_fill: unknown exception";
+        OT_TRACE("ot_mesh_shape_fill: unknown exception");
         return false;
     }
 }
