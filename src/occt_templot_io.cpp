@@ -152,9 +152,12 @@ static std::string normalize_stl_line_endings(const char* path) {
 OT_EXPORT OTShapeRef ot_import_stl(const char* path) {
     if (!path) {
         g_last_error = "ot_import_stl: path is NULL";
+        OT_TRACE("ot_import_stl: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_stl: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_stl");
     try {
         // Normalize CR-only line endings (e.g. from Templot on macOS)
         std::string tmp_path = normalize_stl_line_endings(path);
@@ -162,7 +165,9 @@ OT_EXPORT OTShapeRef ot_import_stl(const char* path) {
 
         TopoDS_Shape shape;
         StlAPI_Reader reader;
+        OT_TRACE("ot_import_stl: StlAPI_Reader::Read start");
         bool ok = reader.Read(shape, read_path);
+        OT_TRACE("ot_import_stl: StlAPI_Reader::Read done ok=%d", ok ? 1 : 0);
 
         if (!tmp_path.empty()) std::remove(tmp_path.c_str());
 
@@ -178,9 +183,11 @@ OT_EXPORT OTShapeRef ot_import_stl(const char* path) {
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_stl: ") + e.what();
+        OT_TRACE("ot_import_stl: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_stl: unknown exception";
+        OT_TRACE("ot_import_stl: unknown exception");
         return nullptr;
     }
 }
@@ -188,9 +195,12 @@ OT_EXPORT OTShapeRef ot_import_stl(const char* path) {
 OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolerance) {
     if (!path) {
         g_last_error = "ot_import_stl_robust: path is NULL";
+        OT_TRACE("ot_import_stl_robust: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_stl_robust: enter (%s, tol=%g)", path, sewing_tolerance);
+    OT_TRACE_TIMER("ot_import_stl_robust");
     try {
         // Normalize CR-only line endings (e.g. from Templot on macOS)
         std::string tmp_path = normalize_stl_line_endings(path);
@@ -198,7 +208,9 @@ OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolera
 
         TopoDS_Shape shape;
         StlAPI_Reader reader;
+        OT_TRACE("ot_import_stl_robust: StlAPI_Reader::Read start");
         bool ok = reader.Read(shape, read_path);
+        OT_TRACE("ot_import_stl_robust: StlAPI_Reader::Read done ok=%d", ok ? 1 : 0);
 
         if (!tmp_path.empty()) std::remove(tmp_path.c_str());
 
@@ -214,7 +226,9 @@ OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolera
         // Sew disconnected faces
         BRepBuilderAPI_Sewing sewing(sewing_tolerance);
         sewing.Add(shape);
+        OT_TRACE("ot_import_stl_robust: Sewing::Perform start");
         sewing.Perform();
+        OT_TRACE("ot_import_stl_robust: Sewing::Perform done");
         TopoDS_Shape sewedShape = sewing.SewedShape();
         if (sewedShape.IsNull()) sewedShape = shape;
 
@@ -231,17 +245,21 @@ OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolera
         }
 
         // Apply shape healing
+        OT_TRACE("ot_import_stl_robust: ShapeFix_Shape::Perform start");
         ShapeFix_Shape fixer(resultShape);
         fixer.Perform();
         TopoDS_Shape fixed = fixer.Shape();
+        OT_TRACE("ot_import_stl_robust: ShapeFix_Shape::Perform done");
 
         g_last_error.clear();
         return new OTShapeInternal(fixed.IsNull() ? resultShape : fixed);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_stl_robust: ") + e.what();
+        OT_TRACE("ot_import_stl_robust: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_stl_robust: unknown exception";
+        OT_TRACE("ot_import_stl_robust: unknown exception");
         return nullptr;
     }
 }
@@ -249,18 +267,25 @@ OT_EXPORT OTShapeRef ot_import_stl_robust(const char* path, double sewing_tolera
 OT_EXPORT OTShapeRef ot_import_step(const char* path) {
     if (!path) {
         g_last_error = "ot_import_step: path is NULL";
+        OT_TRACE("ot_import_step: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_step: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_step");
     try {
         STEPControl_Reader reader;
+        OT_TRACE("ot_import_step: ReadFile start");
         IFSelect_ReturnStatus status = reader.ReadFile(path);
+        OT_TRACE("ot_import_step: ReadFile done status=%d", (int)status);
         if (status != IFSelect_RetDone) {
             g_last_error = "ot_import_step: ReadFile failed";
             return nullptr;
         }
 
+        OT_TRACE("ot_import_step: TransferRoots start");
         reader.TransferRoots();
+        OT_TRACE("ot_import_step: TransferRoots done");
         TopoDS_Shape shape = reader.OneShape();
         if (shape.IsNull()) {
             g_last_error = "ot_import_step: resulting shape is null";
@@ -271,9 +296,11 @@ OT_EXPORT OTShapeRef ot_import_step(const char* path) {
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_step: ") + e.what();
+        OT_TRACE("ot_import_step: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_step: unknown exception";
+        OT_TRACE("ot_import_step: unknown exception");
         return nullptr;
     }
 }
@@ -281,9 +308,12 @@ OT_EXPORT OTShapeRef ot_import_step(const char* path) {
 OT_EXPORT OTShapeRef ot_import_step_robust(const char* path) {
     if (!path) {
         g_last_error = "ot_import_step_robust: path is NULL";
+        OT_TRACE("ot_import_step_robust: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_step_robust: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_step_robust");
     try {
         STEPControl_Reader reader;
 
@@ -293,13 +323,18 @@ OT_EXPORT OTShapeRef ot_import_step_robust(const char* path) {
         Interface_Static::SetIVal("read.surfacecurve.mode", 3);
         Interface_Static::SetIVal("read.step.product.mode", 1);
 
+        OT_TRACE("ot_import_step_robust: ReadFile start");
         IFSelect_ReturnStatus status = reader.ReadFile(path);
+        OT_TRACE("ot_import_step_robust: ReadFile done status=%d", (int)status);
         if (status != IFSelect_RetDone) {
             g_last_error = "ot_import_step_robust: ReadFile failed";
             return nullptr;
         }
 
-        if (reader.TransferRoots() == 0) {
+        OT_TRACE("ot_import_step_robust: TransferRoots start");
+        Standard_Integer roots = reader.TransferRoots();
+        OT_TRACE("ot_import_step_robust: TransferRoots done (%d roots)", (int)roots);
+        if (roots == 0) {
             g_last_error = "ot_import_step_robust: TransferRoots returned 0";
             return nullptr;
         }
@@ -359,9 +394,11 @@ OT_EXPORT OTShapeRef ot_import_step_robust(const char* path) {
 
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_step_robust: ") + e.what();
+        OT_TRACE("ot_import_step_robust: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_step_robust: unknown exception";
+        OT_TRACE("ot_import_step_robust: unknown exception");
         return nullptr;
     }
 }
@@ -370,9 +407,12 @@ OT_EXPORT OTImportResult ot_import_step_with_diagnostics(const char* path) {
     OTImportResult result = {nullptr, -1, -1, false, false, false};
     if (!path) {
         g_last_error = "ot_import_step_with_diagnostics: path is NULL";
+        OT_TRACE("ot_import_step_with_diagnostics: NULL path");
         return result;
     }
 
+    OT_TRACE("ot_import_step_with_diagnostics: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_step_with_diagnostics");
     try {
         STEPControl_Reader reader;
 
@@ -440,9 +480,11 @@ OT_EXPORT OTImportResult ot_import_step_with_diagnostics(const char* path) {
 
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_step_with_diagnostics: ") + e.what();
+        OT_TRACE("ot_import_step_with_diagnostics: Standard_Failure: %s", e.what());
         return result;
     } catch (...) {
         g_last_error = "ot_import_step_with_diagnostics: unknown exception";
+        OT_TRACE("ot_import_step_with_diagnostics: unknown exception");
         return result;
     }
 }
@@ -450,18 +492,25 @@ OT_EXPORT OTImportResult ot_import_step_with_diagnostics(const char* path) {
 OT_EXPORT OTShapeRef ot_import_iges(const char* path) {
     if (!path) {
         g_last_error = "ot_import_iges: path is NULL";
+        OT_TRACE("ot_import_iges: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_iges: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_iges");
     try {
         IGESControl_Reader reader;
+        OT_TRACE("ot_import_iges: ReadFile start");
         IFSelect_ReturnStatus status = reader.ReadFile(path);
+        OT_TRACE("ot_import_iges: ReadFile done status=%d", (int)status);
         if (status != IFSelect_RetDone) {
             g_last_error = "ot_import_iges: ReadFile failed";
             return nullptr;
         }
 
+        OT_TRACE("ot_import_iges: TransferRoots start");
         reader.TransferRoots();
+        OT_TRACE("ot_import_iges: TransferRoots done");
         TopoDS_Shape shape = reader.OneShape();
         if (shape.IsNull()) {
             g_last_error = "ot_import_iges: resulting shape is null";
@@ -472,9 +521,11 @@ OT_EXPORT OTShapeRef ot_import_iges(const char* path) {
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_iges: ") + e.what();
+        OT_TRACE("ot_import_iges: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_iges: unknown exception";
+        OT_TRACE("ot_import_iges: unknown exception");
         return nullptr;
     }
 }
@@ -482,22 +533,30 @@ OT_EXPORT OTShapeRef ot_import_iges(const char* path) {
 OT_EXPORT OTShapeRef ot_import_iges_robust(const char* path) {
     if (!path) {
         g_last_error = "ot_import_iges_robust: path is NULL";
+        OT_TRACE("ot_import_iges_robust: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_iges_robust: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_iges_robust");
     try {
         IGESControl_Reader reader;
 
         Interface_Static::SetIVal("read.precision.mode", 0);
         Interface_Static::SetRVal("read.precision.val", 0.0001);
 
+        OT_TRACE("ot_import_iges_robust: ReadFile start");
         IFSelect_ReturnStatus status = reader.ReadFile(path);
+        OT_TRACE("ot_import_iges_robust: ReadFile done status=%d", (int)status);
         if (status != IFSelect_RetDone) {
             g_last_error = "ot_import_iges_robust: ReadFile failed";
             return nullptr;
         }
 
-        if (reader.TransferRoots() == 0) {
+        OT_TRACE("ot_import_iges_robust: TransferRoots start");
+        Standard_Integer roots = reader.TransferRoots();
+        OT_TRACE("ot_import_iges_robust: TransferRoots done (%d roots)", (int)roots);
+        if (roots == 0) {
             g_last_error = "ot_import_iges_robust: TransferRoots returned 0";
             return nullptr;
         }
@@ -508,17 +567,21 @@ OT_EXPORT OTShapeRef ot_import_iges_robust(const char* path) {
             return nullptr;
         }
 
+        OT_TRACE("ot_import_iges_robust: ShapeFix_Shape::Perform start");
         ShapeFix_Shape fixer(shape);
         fixer.Perform();
         TopoDS_Shape fixed = fixer.Shape();
+        OT_TRACE("ot_import_iges_robust: ShapeFix_Shape::Perform done");
 
         g_last_error.clear();
         return new OTShapeInternal(fixed.IsNull() ? shape : fixed);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_iges_robust: ") + e.what();
+        OT_TRACE("ot_import_iges_robust: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_iges_robust: unknown exception";
+        OT_TRACE("ot_import_iges_robust: unknown exception");
         return nullptr;
     }
 }
@@ -526,9 +589,12 @@ OT_EXPORT OTShapeRef ot_import_iges_robust(const char* path) {
 OT_EXPORT OTShapeRef ot_import_obj(const char* path) {
     if (!path) {
         g_last_error = "ot_import_obj: path is NULL";
+        OT_TRACE("ot_import_obj: NULL path");
         return nullptr;
     }
 
+    OT_TRACE("ot_import_obj: enter (%s)", path);
+    OT_TRACE_TIMER("ot_import_obj");
     try {
         RWObj_CafReader objReader;
 
@@ -538,7 +604,10 @@ OT_EXPORT OTShapeRef ot_import_obj(const char* path) {
 
         objReader.SetDocument(doc);
         TCollection_AsciiString filePath(path);
-        if (!objReader.Perform(filePath, Message_ProgressRange())) {
+        OT_TRACE("ot_import_obj: RWObj_CafReader::Perform start");
+        bool ok = objReader.Perform(filePath, Message_ProgressRange());
+        OT_TRACE("ot_import_obj: RWObj_CafReader::Perform done ok=%d", ok ? 1 : 0);
+        if (!ok) {
             app->Close(doc);
             g_last_error = "ot_import_obj: RWObj_CafReader::Perform failed";
             return nullptr;
@@ -558,9 +627,11 @@ OT_EXPORT OTShapeRef ot_import_obj(const char* path) {
         return new OTShapeInternal(shape);
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_import_obj: ") + e.what();
+        OT_TRACE("ot_import_obj: Standard_Failure: %s", e.what());
         return nullptr;
     } catch (...) {
         g_last_error = "ot_import_obj: unknown exception";
+        OT_TRACE("ot_import_obj: unknown exception");
         return nullptr;
     }
 }
@@ -572,19 +643,26 @@ OT_EXPORT OTShapeRef ot_import_obj(const char* path) {
 OT_EXPORT bool ot_export_stl(OTShapeRef shape, const char* path, double deflection) {
     if (!shape || !path) {
         g_last_error = "ot_export_stl: shape or path is NULL";
+        OT_TRACE("ot_export_stl: NULL shape or path");
         return false;
     }
 
+    OT_TRACE("ot_export_stl: enter (%s, deflection=%g)", path, deflection);
+    OT_TRACE_TIMER("ot_export_stl");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Mesh the shape first
+        OT_TRACE("ot_export_stl: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_export_stl: BRepMesh_IncrementalMesh::Perform done");
 
         StlAPI_Writer writer;
         writer.ASCIIMode() = false; // Binary STL for smaller files
+        OT_TRACE("ot_export_stl: StlAPI_Writer::Write start");
         bool result = writer.Write(s->shape, path);
+        OT_TRACE("ot_export_stl: StlAPI_Writer::Write done ok=%d", result ? 1 : 0);
 
         if (!result) {
             g_last_error = "ot_export_stl: StlAPI_Writer::Write failed";
@@ -594,9 +672,11 @@ OT_EXPORT bool ot_export_stl(OTShapeRef shape, const char* path, double deflecti
         return result;
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_export_stl: ") + e.what();
+        OT_TRACE("ot_export_stl: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_export_stl: unknown exception";
+        OT_TRACE("ot_export_stl: unknown exception");
         return false;
     }
 }
@@ -604,9 +684,12 @@ OT_EXPORT bool ot_export_stl(OTShapeRef shape, const char* path, double deflecti
 OT_EXPORT bool ot_export_step(OTShapeRef shape, const char* path) {
     if (!shape || !path) {
         g_last_error = "ot_export_step: shape or path is NULL";
+        OT_TRACE("ot_export_step: NULL shape or path");
         return false;
     }
 
+    OT_TRACE("ot_export_step: enter (%s)", path);
+    OT_TRACE_TIMER("ot_export_step");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
         bool success = false;
@@ -614,13 +697,17 @@ OT_EXPORT bool ot_export_step(OTShapeRef shape, const char* path) {
             STEPControl_Writer writer;
             Interface_Static::SetCVal("write.step.schema", "AP214");
 
+            OT_TRACE("ot_export_step: Transfer start");
             IFSelect_ReturnStatus status = writer.Transfer(s->shape, STEPControl_AsIs);
+            OT_TRACE("ot_export_step: Transfer done status=%d", (int)status);
             if (status != IFSelect_RetDone) {
                 g_last_error = "ot_export_step: Transfer failed";
                 return false;
             }
 
+            OT_TRACE("ot_export_step: Write start");
             status = writer.Write(path);
+            OT_TRACE("ot_export_step: Write done status=%d", (int)status);
             success = (status == IFSelect_RetDone);
         }
 
@@ -632,9 +719,11 @@ OT_EXPORT bool ot_export_step(OTShapeRef shape, const char* path) {
         return success;
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_export_step: ") + e.what();
+        OT_TRACE("ot_export_step: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_export_step: unknown exception";
+        OT_TRACE("ot_export_step: unknown exception");
         return false;
     }
 }
@@ -642,22 +731,30 @@ OT_EXPORT bool ot_export_step(OTShapeRef shape, const char* path) {
 OT_EXPORT bool ot_export_iges(OTShapeRef shape, const char* path) {
     if (!shape || !path) {
         g_last_error = "ot_export_iges: shape or path is NULL";
+        OT_TRACE("ot_export_iges: NULL shape or path");
         return false;
     }
 
+    OT_TRACE("ot_export_iges: enter (%s)", path);
+    OT_TRACE_TIMER("ot_export_iges");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
         bool success = false;
         {
             IGESControl_Writer writer("MM", 0); // Millimeters, faces mode
 
+            OT_TRACE("ot_export_iges: AddShape start");
             if (!writer.AddShape(s->shape)) {
                 g_last_error = "ot_export_iges: AddShape failed";
+                OT_TRACE("ot_export_iges: AddShape failed");
                 return false;
             }
+            OT_TRACE("ot_export_iges: AddShape done; ComputeModel start");
 
             writer.ComputeModel();
+            OT_TRACE("ot_export_iges: ComputeModel done; Write start");
             success = writer.Write(path);
+            OT_TRACE("ot_export_iges: Write done ok=%d", success ? 1 : 0);
         }
 
         if (!success) {
@@ -668,9 +765,11 @@ OT_EXPORT bool ot_export_iges(OTShapeRef shape, const char* path) {
         return success;
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_export_iges: ") + e.what();
+        OT_TRACE("ot_export_iges: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_export_iges: unknown exception";
+        OT_TRACE("ot_export_iges: unknown exception");
         return false;
     }
 }
@@ -678,15 +777,20 @@ OT_EXPORT bool ot_export_iges(OTShapeRef shape, const char* path) {
 OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflection) {
     if (!shape || !path) {
         g_last_error = "ot_export_obj: shape or path is NULL";
+        OT_TRACE("ot_export_obj: NULL shape or path");
         return false;
     }
 
+    OT_TRACE("ot_export_obj: enter (%s, deflection=%g)", path, deflection);
+    OT_TRACE_TIMER("ot_export_obj");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Tessellate the shape first
+        OT_TRACE("ot_export_obj: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_export_obj: BRepMesh_IncrementalMesh::Perform done");
 
         // Create an XDE document
         Handle(TDocStd_Document) doc;
@@ -697,8 +801,10 @@ OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflecti
         shapeTool->AddShape(s->shape);
 
         // Write OBJ
+        OT_TRACE("ot_export_obj: RWObj_CafWriter::Perform start");
         RWObj_CafWriter writer(path);
         bool success = writer.Perform(doc, NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString>(), Message_ProgressRange());
+        OT_TRACE("ot_export_obj: RWObj_CafWriter::Perform done ok=%d", success ? 1 : 0);
 
         app->Close(doc);
 
@@ -710,9 +816,11 @@ OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflecti
         return success;
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_export_obj: ") + e.what();
+        OT_TRACE("ot_export_obj: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_export_obj: unknown exception";
+        OT_TRACE("ot_export_obj: unknown exception");
         return false;
     }
 }
@@ -720,15 +828,20 @@ OT_EXPORT bool ot_export_obj(OTShapeRef shape, const char* path, double deflecti
 OT_EXPORT bool ot_export_ply(OTShapeRef shape, const char* path, double deflection) {
     if (!shape || !path) {
         g_last_error = "ot_export_ply: shape or path is NULL";
+        OT_TRACE("ot_export_ply: NULL shape or path");
         return false;
     }
 
+    OT_TRACE("ot_export_ply: enter (%s, deflection=%g)", path, deflection);
+    OT_TRACE_TIMER("ot_export_ply");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Tessellate the shape first
+        OT_TRACE("ot_export_ply: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_export_ply: BRepMesh_IncrementalMesh::Perform done");
 
         // Create an XDE document
         Handle(TDocStd_Document) doc;
@@ -739,9 +852,11 @@ OT_EXPORT bool ot_export_ply(OTShapeRef shape, const char* path, double deflecti
         shapeTool->AddShape(s->shape);
 
         // Write PLY
+        OT_TRACE("ot_export_ply: RWPly_CafWriter::Perform start");
         RWPly_CafWriter writer(path);
         writer.SetNormals(true);
         bool success = writer.Perform(doc, NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString>(), Message_ProgressRange());
+        OT_TRACE("ot_export_ply: RWPly_CafWriter::Perform done ok=%d", success ? 1 : 0);
 
         app->Close(doc);
 
@@ -753,9 +868,11 @@ OT_EXPORT bool ot_export_ply(OTShapeRef shape, const char* path, double deflecti
         return success;
     } catch (const Standard_Failure& e) {
         g_last_error = std::string("ot_export_ply: ") + e.what();
+        OT_TRACE("ot_export_ply: Standard_Failure: %s", e.what());
         return false;
     } catch (...) {
         g_last_error = "ot_export_ply: unknown exception";
+        OT_TRACE("ot_export_ply: unknown exception");
         return false;
     }
 }

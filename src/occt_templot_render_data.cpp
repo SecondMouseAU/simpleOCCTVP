@@ -10,6 +10,7 @@
 
 #include "occt_templot.h"
 #include "occt_templot_internal.h"
+#include "occt_templot_trace.h"
 
 #include <Graphic3d_Camera.hxx>
 #include <Graphic3d_Mat4d.hxx>
@@ -299,19 +300,25 @@ OT_EXPORT OTEdgeMeshData ot_edge_mesh_shape(OTShapeRef shape, double deflection)
 
     if (!shape) {
         g_last_error = "ot_edge_mesh_shape: shape is NULL";
+        OT_TRACE("ot_edge_mesh_shape: NULL shape");
         return result;
     }
 
+    OT_TRACE("ot_edge_mesh_shape: enter (deflection=%g)", deflection);
+    OT_TRACE_TIMER("ot_edge_mesh_shape");
     try {
         auto* s = static_cast<OTShapeInternal*>(shape);
 
         // Tessellate first
+        OT_TRACE("ot_edge_mesh_shape: BRepMesh_IncrementalMesh::Perform start");
         BRepMesh_IncrementalMesh mesher(s->shape, deflection);
         mesher.Perform();
+        OT_TRACE("ot_edge_mesh_shape: BRepMesh_IncrementalMesh::Perform done");
 
         // Enumerate unique edges
         TopTools_IndexedMapOfShape edgeMap;
         TopExp::MapShapes(s->shape, TopAbs_EDGE, edgeMap);
+        OT_TRACE("ot_edge_mesh_shape: unique edges = %d", edgeMap.Extent());
 
         if (edgeMap.Extent() == 0) {
             g_last_error = "ot_edge_mesh_shape: no edges found";
@@ -427,6 +434,8 @@ OT_EXPORT OTEdgeMeshData ot_edge_mesh_shape(OTShapeRef shape, double deflection)
         result.vertex_count = totalVerts;
         result.segment_count = static_cast<int32_t>(polylines.size());
         g_last_error.clear();
+        OT_TRACE("ot_edge_mesh_shape: exit ok (verts=%d segments=%d)",
+                 totalVerts, result.segment_count);
         return result;
 
     } catch (const Standard_Failure& e) {
@@ -434,12 +443,14 @@ OT_EXPORT OTEdgeMeshData ot_edge_mesh_shape(OTShapeRef shape, double deflection)
         free(result.segment_starts);
         result = {nullptr, 0, nullptr, 0};
         g_last_error = std::string("ot_edge_mesh_shape: ") + e.what();
+        OT_TRACE("ot_edge_mesh_shape: Standard_Failure: %s", e.what());
         return result;
     } catch (...) {
         free(result.vertices);
         free(result.segment_starts);
         result = {nullptr, 0, nullptr, 0};
         g_last_error = "ot_edge_mesh_shape: unknown exception";
+        OT_TRACE("ot_edge_mesh_shape: unknown exception");
         return result;
     }
 }
