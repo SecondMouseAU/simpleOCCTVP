@@ -1,0 +1,24 @@
+simpleOCCTVP — Pure C / cdecl FFI surface over OpenCASCADE Technology (OCCT).
+
+Copyright (C) 2025-2026 simpleOCCTVP contributors.
+
+This software is licensed under the GNU Lesser General Public License,
+version 2.1, with the Open CASCADE Exception (version 1.0), inherited from
+the OpenCASCADE Technology library (https://dev.opencascade.org/) that this
+project wraps.
+
+  - The full LGPL 2.1 text is in LICENSE.
+  - The Open CASCADE Exception is in OCCT_LGPL_EXCEPTION.txt.
+
+The OCCT exception preserves the right to distribute object code that
+incorporates OCCT header material under terms of your choice, provided
+prominent notice is given that the object code makes use of or is based on
+facilities provided by Open CASCADE Technology.
+
+Third-party components
+
+  OpenCASCADE Technology
+    https://github.com/Open-Cascade-SAS/OCCT
+    Copyright (c) 1999-2025 OPEN CASCADE SAS
+    Licensed under LGPL 2.1 with the Open CASCADE Exception.
+    Statically linked into the simpleOCCTVP shared library.

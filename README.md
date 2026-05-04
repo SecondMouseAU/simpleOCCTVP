@@ -353,4 +353,10 @@ These map onto OCCT's `Graphic3d_RenderingParams` — the same GPU rendering pat
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+simpleOCCTVP is distributed under the **GNU Lesser General Public License, version 2.1, with the Open CASCADE Exception**, mirroring the licence of [OpenCASCADE Technology](https://github.com/Open-Cascade-SAS/OCCT) which it wraps.
+
+- Full LGPL 2.1 text: [LICENSE](LICENSE)
+- Open CASCADE Exception: [OCCT_LGPL_EXCEPTION.txt](OCCT_LGPL_EXCEPTION.txt)
+- Third-party attributions and project copyright: [NOTICE](NOTICE)
+
+The OCCT exception preserves the right to distribute object code that incorporates OCCT header material under terms of your choice, provided prominent notice is given that the object code makes use of or is based on facilities provided by Open CASCADE Technology.
