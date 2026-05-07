@@ -18,9 +18,7 @@
 set -e
 
 OCCT_VERSION="8.0.0"
-# Use beta1 (feature-frozen 2026-04-30; final 8.0.0 planned 2026-05-07).
-# Switch to "" once the final V8_0_0 tag is published.
-OCCT_RC="beta1"
+OCCT_RC=""
 # Pre-release tags use format V8_0_0_rc5 / V8_0_0_beta1; release uses V8_0_0
 if [ -n "$OCCT_RC" ]; then
     OCCT_TAG="V${OCCT_VERSION//./_}_${OCCT_RC}"
@@ -74,13 +72,8 @@ cd "$DEPS_DIR"
 
 if [ ! -d "occt-src" ]; then
     echo ">>> Downloading OCCT source..."
-    if [ -n "$OCCT_RC" ]; then
-        git clone --depth 1 --branch "$OCCT_TAG" \
-            https://github.com/Open-Cascade-SAS/OCCT.git occt-src
-    else
-        git clone --depth 1 --branch "$OCCT_TAG" \
-            https://git.dev.opencascade.org/repos/occt.git occt-src
-    fi
+    git clone --depth 1 --branch "$OCCT_TAG" \
+        https://github.com/Open-Cascade-SAS/OCCT.git occt-src
 else
     echo ">>> OCCT source already exists, skipping download"
 fi
