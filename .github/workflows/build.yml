@@ -18,7 +18,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: deps/occt-install
-          key: occt-8.0.0-rc5-windows-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+          key: occt-8.0.0-windows-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
 
       - name: Build OCCT dependencies
         if: steps.cache-occt.outputs.cache-hit != 'true'
@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: deps/occt-install
-          key: occt-8.0.0-rc5-macos-arm64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+          key: occt-8.0.0-macos-arm64-${{ hashFiles('scripts/build-occt-deps.sh') }}
 
       - name: Build OCCT dependencies
         if: steps.cache-occt.outputs.cache-hit != 'true'
@@ -100,7 +100,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: deps/occt-install
-          key: occt-8.0.0-rc5-linux-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
+          key: occt-8.0.0-linux-x64-${{ hashFiles('scripts/build-occt-deps.sh') }}
 
       - name: Build OCCT dependencies
         if: steps.cache-occt.outputs.cache-hit != 'true'
