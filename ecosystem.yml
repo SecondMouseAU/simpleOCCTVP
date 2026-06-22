@@ -1,0 +1,10 @@
+okf_version: 1
+repo: simpleOCCTVP
+cluster: kernel
+visibility: public
+status: active
+language: C++
+summary: A C++17 shared library exposing a pure C (cdecl) API over OpenCASCADE (OCCT 8.0.0) — shape I/O, healing, mesh extraction, and offscreen 3D rendering for FFI from any language.
+products: []
+depends_on: []          # leaf — wraps OCCT directly; no intra-org deps
+maintainer: gsdali
