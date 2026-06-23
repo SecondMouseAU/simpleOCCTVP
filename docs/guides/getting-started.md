@@ -73,11 +73,7 @@ int main(void) {
 }
 ```
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer/dist/model-viewer.min.js"></script>
-
-<model-viewer src="../models/drilled-block.glb" camera-controls auto-rotate environment-image="neutral" exposure="1.1" shadow-intensity="1" style="width:340px;height:300px;background:#eef1f5;border-radius:6px"></model-viewer>
-
-*Interactive 3D — representative kernel model (example rendered PNG).*
+<!-- 3D render TODO: example rendered PNG -->
 
 ## 3. Compile and link
 
