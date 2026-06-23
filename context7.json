@@ -1,0 +1,24 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "simpleOCCTVP",
+  "description": "C++17 shared library exposing a pure C (cdecl) API over OpenCASCADE 8.0.0: shape I/O (STL/STEP/IGES/OBJ/PLY), healing, mesh extraction, and offscreen 3D rendering. FFI-friendly, cross-platform.",
+  "folders": [
+    "docs",
+    "src"
+  ],
+  "excludeFolders": [
+    "build",
+    ".build",
+    "okf",
+    "tests"
+  ],
+  "rules": [
+    "Link the shared library (libsimpleOCCTVP.dylib/.so or simpleOCCTVP.dll) and #include src/occt_templot.h. On macOS/Linux pass -lsimpleOCCTVP plus an rpath; on Windows link simpleOCCTVP.lib and put the .dll beside the executable or on PATH.",
+    "Every exported symbol uses the cdecl calling convention and is prefixed ot_ (operations) or occt_templot_ (lifecycle). Call occt_templot_init() once before any other function and occt_templot_shutdown() once at exit.",
+    "OTShapeRef, OTViewerRef, OTCameraRef, and OTDrawerRef are opaque void* handles owned by the caller. Free each with its destructor: ot_shape_free, ot_viewer_destroy, ot_camera_destroy, ot_drawer_destroy. All destructors are NULL-safe.",
+    "Returned structs OTMeshData and OTEdgeMeshData own heap buffers; release them with ot_mesh_free / ot_edge_mesh_free. Importers and healing functions return NULL on failure; read occt_templot_last_error() (thread-local) for the reason.",
+    "Offscreen rendering: create a viewer with ot_viewer_create(w,h), add shapes via ot_viewer_add_shape (returns a display id >0), then render with ot_viewer_render, ot_viewer_render_to_buffer, or ot_viewer_save_image. The viewer does not own the shapes.",
+    "Set render quality with the CADRays-style knobs over OCCT Graphic3d_RenderingParams: ot_viewer_set_render_preset (DRAFT/BALANCED/PHOTOREALISTIC), ot_viewer_set_rendering_method, ot_viewer_set_path_tracing, and ot_viewer_set_shape_pbr_material.",
+    "Document only the real exported functions declared in src/occt_templot.h; the Pascal binding pascal/occt_templot.pas mirrors them one-to-one with cdecl external declarations and adds helpers OTGetLastError, OTShapeTypeName, and OTViewerRenderToBitmap."
+  ]
+}
