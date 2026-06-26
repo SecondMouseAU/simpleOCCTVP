@@ -42,3 +42,7 @@ licensing (LGPL-2.1 + OCCT exception).
 - Consumable via direct link, CMake `add_subdirectory` / imported target, or runtime
   `dlopen` / `LoadLibrary`.
 - A Pascal binding (`pascal/occt_templot.pas`) ships alongside the C header.
+
+## Policies
+
+- [Query `context` first for OCCT / OCCTSwift docs](policies/context-first.md)
