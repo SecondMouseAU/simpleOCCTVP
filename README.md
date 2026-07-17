@@ -25,7 +25,7 @@ A C++17 shared library providing a pure C API over [OpenCASCADE](https://dev.ope
 
 ### Option 1: Prebuilt binaries (recommended)
 
-Download the shared library for your platform from the [Releases](https://github.com/gsdali/simpleOCCTVP/releases) page and place it where your application can find it.
+Download the shared library for your platform from the [Releases](https://github.com/SecondMouseAU/simpleOCCTVP/releases) page and place it where your application can find it.
 
 **Directory layout:**
 
@@ -44,7 +44,7 @@ your-project/
 ### Option 2: Build from source
 
 ```bash
-git clone https://github.com/gsdali/simpleOCCTVP.git
+git clone https://github.com/SecondMouseAU/simpleOCCTVP.git
 cd simpleOCCTVP
 scripts/build-occt-deps.sh          # ~15-30 min, builds OCCT 8.0.0
 cmake -B build -DCMAKE_BUILD_TYPE=Release
